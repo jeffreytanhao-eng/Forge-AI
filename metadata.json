@@ -1,0 +1,6 @@
+{
+  "name": "ForgeAI Developer Platform",
+  "description": "ForgeAI: An integrated, three-tier platform combining a unified Model Hub, custom Agent Studio prompt generators, and an agentic Monaco IDE workspace with code dependencies Knowledge Graphs.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
