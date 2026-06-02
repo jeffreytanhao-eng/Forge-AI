@@ -308,6 +308,143 @@ export function slugify(str: string): string {
 }
 `
     }
+  ],
+  forge_platform: [
+    {
+      path: '/src/App.tsx',
+      name: 'App.tsx',
+      type: 'file',
+      content: `/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { useState, useEffect } from 'react';
+import ForgeIDE from './components/ForgeIDE';
+import KnowledgeGraphView from './components/KnowledgeGraphView';
+import ThemeCustomizer from './components/ThemeCustomizer';
+import ModelHub from './components/ModelHub';
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState('forge_ide');
+  const [theme, setTheme] = useState({ logoText: 'ForgeAI', primaryColor: '#6366f1' });
+
+  function handleUpdateTheme(newTheme) {
+    setTheme(newTheme);
+  }
+
+  return (
+    <div className="app-container font-sans">
+      <h1>{theme.logoText} Developer Platform</h1>
+      <ForgeIDE />
+      <KnowledgeGraphView />
+      <ThemeCustomizer onUpdateTheme={handleUpdateTheme} />
+    </div>
+  );
+}`
+    },
+    {
+      path: '/src/components/ForgeIDE.tsx',
+      name: 'ForgeIDE.tsx',
+      type: 'file',
+      content: `/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { useState } from 'react';
+import { Play, Check, X, Terminal } from 'lucide-react';
+
+export default function ForgeIDE() {
+  const [logs, setLogs] = useState(['Terminal ready...']);
+
+  function executeCompiler() {
+    setLogs(prev => [...prev, 'Running compilation check!']);
+  }
+
+  return (
+    <div className="ide-editor border border-slate-800">
+      <button onClick={executeCompiler}>Compile</button>
+      <pre>{logs.join('\\n')}</pre>
+    </div>
+  );
+}`
+    },
+    {
+      path: '/src/components/KnowledgeGraphView.tsx',
+      name: 'KnowledgeGraphView.tsx',
+      type: 'file',
+      content: `/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { useState } from 'react';
+import { generateGraphifyGraph } from '../utils/graphify';
+import { Search, Layers } from 'lucide-react';
+
+export default function KnowledgeGraphView() {
+  const [searchTerm, setSearchTerm] = useState('');
+
+  function renderGraph() {
+    return <p>Active node rendering for search: {searchTerm}</p>;
+  }
+
+  return (
+    <div className="graph-stage">
+      <h3>Codebase Graphify Visualizer</h3>
+      <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+      {renderGraph()}
+    </div>
+  );
+}`
+    },
+    {
+      path: '/src/utils/graphify.ts',
+      name: 'graphify.ts',
+      type: 'file',
+      content: `/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.5
+ */
+
+export function flattenWorkspaceCodeFiles(files: any[]): any[] {
+  return files.filter(f => f.type === 'file');
+}
+
+export function generateGraphifyGraph(workspaceFiles: any[]): any {
+  const files = flattenWorkspaceCodeFiles(workspaceFiles);
+  const nodes = files.map(f => ({ id: f.name, label: f.name, type: 'file' }));
+  const edges = [];
+  return { nodes, edges };
+}`
+    },
+    {
+      path: '/server.ts',
+      name: 'server.ts',
+      type: 'file',
+      content: `/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import express from 'express';
+import dotenv from 'dotenv';
+
+const app = express();
+const PORT = 3000;
+
+function startServer() {
+  app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok' });
+  });
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log('Server running on port ' + PORT);
+  });
+}
+
+startServer();`
+    }
   ]
 };
 
@@ -372,6 +509,48 @@ export const MOCK_KNOWLEDGE_GRAPHS: { [key: string]: CodeKnowledgeGraph } = {
       { source: 'func_transform', target: 'func_serialize', type: 'calls' },
       { source: 'func_transform', target: 'func_slugify', type: 'calls' },
       { source: 'func_transform', target: 'func_capitalize', type: 'calls' },
+    ]
+  },
+  forge_platform: {
+    nodes: [
+      { id: 'file_app', label: 'App.tsx', type: 'file', filePath: '/src/App.tsx', x: 380, y: 200 },
+      { id: 'func_app', label: 'App()', type: 'function', filePath: '/src/App.tsx', x: 380, y: 80 },
+      { id: 'func_updatetheme', label: 'handleUpdateTheme()', type: 'function', filePath: '/src/App.tsx', x: 260, y: 120 },
+      
+      { id: 'file_ide', label: 'ForgeIDE.tsx', type: 'file', filePath: '/src/components/ForgeIDE.tsx', x: 150, y: 200 },
+      { id: 'func_ide', label: 'ForgeIDE()', type: 'function', filePath: '/src/components/ForgeIDE.tsx', x: 80, y: 120 },
+      { id: 'func_execute', label: 'executeCompiler()', type: 'function', filePath: '/src/components/ForgeIDE.tsx', x: 80, y: 280 },
+      
+      { id: 'file_graph', label: 'KnowledgeGraphView.tsx', type: 'file', filePath: '/src/components/KnowledgeGraphView.tsx', x: 610, y: 200 },
+      { id: 'func_graph', label: 'KnowledgeGraphView()', type: 'function', filePath: '/src/components/KnowledgeGraphView.tsx', x: 680, y: 120 },
+      { id: 'func_rendergraph', label: 'renderGraph()', type: 'function', filePath: '/src/components/KnowledgeGraphView.tsx', x: 680, y: 280 },
+      
+      { id: 'file_graphify', label: 'graphify.ts', type: 'file', filePath: '/src/utils/graphify.ts', x: 500, y: 380 },
+      { id: 'func_flatten', label: 'flattenWorkspaceCodeFiles()', type: 'function', filePath: '/src/utils/graphify.ts', x: 380, y: 440 },
+      { id: 'func_generate', label: 'generateGraphifyGraph()', type: 'function', filePath: '/src/utils/graphify.ts', x: 600, y: 440 },
+
+      { id: 'file_server', label: 'server.ts', type: 'file', filePath: '/server.ts', x: 200, y: 380 },
+      { id: 'func_startserver', label: 'startServer()', type: 'function', filePath: '/server.ts', x: 150, y: 445 }
+    ],
+    edges: [
+      { source: 'file_app', target: 'func_app', type: 'contains' },
+      { source: 'file_app', target: 'func_updatetheme', type: 'contains' },
+      { source: 'file_ide', target: 'func_ide', type: 'contains' },
+      { source: 'file_ide', target: 'func_execute', type: 'contains' },
+      { source: 'file_graph', target: 'func_graph', type: 'contains' },
+      { source: 'file_graph', target: 'func_rendergraph', type: 'contains' },
+      { source: 'file_graphify', target: 'func_flatten', type: 'contains' },
+      { source: 'file_graphify', target: 'func_generate', type: 'contains' },
+      { source: 'file_server', target: 'func_startserver', type: 'contains' },
+
+      { source: 'file_app', target: 'file_ide', type: 'imports' },
+      { source: 'file_app', target: 'file_graph', type: 'imports' },
+      { source: 'file_graph', target: 'file_graphify', type: 'imports' },
+
+      { source: 'func_app', target: 'func_ide', type: 'calls' },
+      { source: 'func_app', target: 'func_graph', type: 'calls' },
+      { source: 'func_graph', target: 'func_generate', type: 'calls' },
+      { source: 'func_generate', target: 'func_flatten', type: 'calls' }
     ]
   }
 };

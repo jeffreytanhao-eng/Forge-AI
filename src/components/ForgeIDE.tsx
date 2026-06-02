@@ -12,14 +12,14 @@ interface ForgeIDEProps {
   agents: Agent[];
   activeAgentId: string;
   onChangeActiveAgent: (id: string) => void;
-  workspaceName: 'python_api' | 'ts_utils';
-  onChangeWorkspace: (name: 'python_api' | 'ts_utils') => void;
+  workspaceName: 'python_api' | 'ts_utils' | 'forge_platform';
+  onChangeWorkspace: (name: 'python_api' | 'ts_utils' | 'forge_platform') => void;
   onUpdateGraph: () => void;
+  workspaceFiles: WorkspaceFile[];
+  onUpdateFiles: (files: WorkspaceFile[]) => void;
 }
 
-export default function ForgeIDE({ agents, activeAgentId, onChangeActiveAgent, workspaceName, onChangeWorkspace, onUpdateGraph }: ForgeIDEProps) {
-  // Loaded Workspace Files
-  const [workspaceFiles, setWorkspaceFiles] = useState<WorkspaceFile[]>([]);
+export default function ForgeIDE({ agents, activeAgentId, onChangeActiveAgent, workspaceName, onChangeWorkspace, onUpdateGraph, workspaceFiles, onUpdateFiles }: ForgeIDEProps) {
   const [activeFile, setActiveFile] = useState<WorkspaceFile | null>(null);
   const [openTabs, setOpenTabs] = useState<string[]>([]);
   
@@ -41,13 +41,10 @@ export default function ForgeIDE({ agents, activeAgentId, onChangeActiveAgent, w
 
   // Sync workspace on change
   useEffect(() => {
-    const rawFiles = MOCK_WORKSPACES[workspaceName];
-    setWorkspaceFiles(rawFiles);
-    
     // Auto-open primary entry files
-    if (rawFiles && rawFiles.length > 0) {
-      const primaryIndex = rawFiles.findIndex(f => f.name.includes('main') || f.name.includes('index'));
-      const defaultToOpen = primaryIndex >= 0 ? rawFiles[primaryIndex] : rawFiles[0];
+    if (workspaceFiles && workspaceFiles.length > 0) {
+      const primaryIndex = workspaceFiles.findIndex(f => f.name.toLowerCase().includes('main') || f.name.toLowerCase().includes('index') || f.name.toLowerCase().includes('app'));
+      const defaultToOpen = primaryIndex >= 0 ? workspaceFiles[primaryIndex] : workspaceFiles[0];
       
       setActiveFile(defaultToOpen);
       setOpenTabs([defaultToOpen.path]);
@@ -101,7 +98,7 @@ export default function ForgeIDE({ agents, activeAgentId, onChangeActiveAgent, w
       }
       return f;
     });
-    setWorkspaceFiles(updatedFiles);
+    onUpdateFiles(updatedFiles);
     setActiveFile(prev => prev ? { ...prev, content: newVal } : null);
   };
 
@@ -126,7 +123,7 @@ export default function ForgeIDE({ agents, activeAgentId, onChangeActiveAgent, w
           '============================== 3 passed in 0.85s ==============================',
           '[COMPILER] Status verified. API bindings healthy!'
         ];
-      } else {
+      } else if (workspaceName === 'ts_utils') {
         resultLogs = [
           '> ts-utils-demolib@1.0.0 test',
           '> jest --verbose',
@@ -141,6 +138,29 @@ export default function ForgeIDE({ agents, activeAgentId, onChangeActiveAgent, w
           'Tests:       3 passed, 3 total',
           'Snapshots:   0 total',
           'Time:        1.42s, estimated 2s',
+          'Ran all test suites. Status: verified'
+        ];
+      } else {
+        resultLogs = [
+          '> forge-platform-webui@2.0.0 verify',
+          '> vite build && tsc --noEmit',
+          '',
+          'vite v6.2.3 building for production...',
+          '✓ 34 modules transformed.',
+          'dist/index.html                  0.48 kB │ info: none',
+          'dist/assets/index-Bv5r_9gD.css   12.4 kB │ info: none',
+          'dist/assets/index-Cz9p_2uX.js   384.2 kB │ info: none',
+          '✓ built in 1.15s',
+          '',
+          'Typecheck: OK.',
+          'PASS  src/__tests__/App.test.tsx',
+          '  ✓ App renders without crashing (8 ms)',
+          '  ✓ Knowledge graph triggers dynamic re-indexing successfully (12 ms)',
+          '',
+          'Test Suites: 1 passed, 1 total',
+          'Tests:       2 passed, 2 total',
+          'Snapshots:   0 total',
+          'Time:        1.34s',
           'Ran all test suites. Status: verified'
         ];
       }
@@ -297,26 +317,39 @@ export default function ForgeIDE({ agents, activeAgentId, onChangeActiveAgent, w
         {/* WORKSPACE DROPDOWN */}
         <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 backdrop-blur-xl">
           <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-500 mb-2 font-semibold">Active Project</label>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="flex flex-col gap-1.5">
             <button
               onClick={() => onChangeWorkspace('python_api')}
-              className={`py-2 px-3 rounded-lg text-xs font-semibold uppercase font-mono tracking-wider border transition-all ${
+              className={`py-1.5 px-3 rounded-lg text-xs font-semibold uppercase font-mono tracking-wider border text-left transition-all flex items-center justify-between ${
                 workspaceName === 'python_api' 
-                  ? 'bg-blue-950/40 border-blue-500 text-blue-400' 
+                  ? 'bg-blue-950/40 border-blue-500 text-blue-400 font-bold' 
                   : 'bg-slate-950 border-slate-900 text-slate-500 hover:text-slate-400'
               }`}
             >
-              🐍 Python API
+              <span>🐍 Python API</span>
+              <span className="text-[10px] opacity-60">FastAPI</span>
             </button>
             <button
               onClick={() => onChangeWorkspace('ts_utils')}
-              className={`py-2 px-3 rounded-lg text-xs font-semibold uppercase font-mono tracking-wider border transition-all ${
+              className={`py-1.5 px-3 rounded-lg text-xs font-semibold uppercase font-mono tracking-wider border text-left transition-all flex items-center justify-between ${
                 workspaceName === 'ts_utils' 
-                  ? 'bg-emerald-950/40 border-emerald-500 text-emerald-400' 
+                  ? 'bg-emerald-950/40 border-emerald-500 text-emerald-400 font-bold' 
                   : 'bg-slate-950 border-slate-900 text-slate-500 hover:text-slate-400'
               }`}
             >
-              📦 TS Utils
+              <span>📦 TS Utils</span>
+              <span className="text-[10px] opacity-60">Library</span>
+            </button>
+            <button
+              onClick={() => onChangeWorkspace('forge_platform')}
+              className={`py-1.5 px-3 rounded-lg text-xs font-semibold uppercase font-mono tracking-wider border text-left transition-all flex items-center justify-between ${
+                workspaceName === 'forge_platform' 
+                  ? 'bg-indigo-950/45 border-indigo-505 text-indigo-400 font-bold' 
+                  : 'bg-slate-950 border-slate-900 text-slate-505 hover:text-slate-400'
+              }`}
+            >
+              <span>🖥️ Forge Platform</span>
+              <span className="text-[10px] opacity-60">Self UI</span>
             </button>
           </div>
         </div>

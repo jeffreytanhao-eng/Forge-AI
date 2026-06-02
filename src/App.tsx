@@ -5,8 +5,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Bot, Server, Layers, Code, Palette, Cpu, CheckCircle, Database, HelpCircle, LayoutDashboard, Terminal } from 'lucide-react';
-import { ModelProvider, ModelConfig, Agent, PlatformTheme } from './types';
-import { INITIAL_PROVIDERS, INITIAL_MODELS, BUILTIN_AGENTS, DEFAULT_THEME } from './data/mockData';
+import { ModelProvider, ModelConfig, Agent, PlatformTheme, WorkspaceFile } from './types';
+import { INITIAL_PROVIDERS, INITIAL_MODELS, BUILTIN_AGENTS, DEFAULT_THEME, MOCK_WORKSPACES } from './data/mockData';
 
 import ModelHub from './components/ModelHub';
 import AgentStudio from './components/AgentStudio';
@@ -24,7 +24,8 @@ export default function App() {
   const [agents, setAgents] = useState<Agent[]>(BUILTIN_AGENTS);
   
   const [activeAgentId, setActiveAgentId] = useState<string>('agent_coder');
-  const [workspaceName, setWorkspaceName] = useState<'python_api' | 'ts_utils'>('python_api');
+  const [workspaceName, setWorkspaceName] = useState<'python_api' | 'ts_utils' | 'forge_platform'>('python_api');
+  const [workspaceFiles, setWorkspaceFiles] = useState<{ [key: string]: WorkspaceFile[] }>(MOCK_WORKSPACES);
   const [graphRevision, setGraphRevision] = useState(0); // Revive symbol graphs on code commits
   const [theme, setTheme] = useState<PlatformTheme>(DEFAULT_THEME);
 
@@ -208,13 +209,17 @@ export default function App() {
             workspaceName={workspaceName}
             onChangeWorkspace={setWorkspaceName}
             onUpdateGraph={handleUpdateGraphRevision}
+            workspaceFiles={workspaceFiles[workspaceName] || []}
+            onUpdateFiles={(files) => setWorkspaceFiles(prev => ({ ...prev, [workspaceName]: files }))}
           />
         )}
 
         {activeTab === 'knowledge_graph' && (
           <KnowledgeGraphView
             workspaceName={workspaceName}
+            workspaceFiles={workspaceFiles[workspaceName] || []}
             graphRevision={graphRevision}
+            onUpdateGraph={handleUpdateGraphRevision}
           />
         )}
 
