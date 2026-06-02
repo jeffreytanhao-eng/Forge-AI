@@ -890,7 +890,7 @@ export default function ForgeIDE({
   const fileTreeRootNode = buildHierarchicalTree(workspaceFiles);
 
   return (
-    <div id="forge_ide_workspace" className="grid grid-cols-1 xl:grid-cols-12 gap-5 h-[100vh] min-h-[680px] bg-slate-950 text-slate-300 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl relative">
+    <div id="forge_ide_workspace" className="flex flex-col xl:flex-row gap-4 h-auto xl:h-[calc(100vh-140px)] xl:min-h-[680px] bg-slate-950 text-slate-300 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl relative p-1">
       
       {/* 1. VS CODE STYLE EXTREMEMENT PRO SYSTEM SIDE BAR ICONS (width: 48px) */}
       <div className="hidden sm:flex flex-col justify-between items-center bg-slate-900 border-r border-slate-855 py-4 w-12 select-none shrink-0">
@@ -950,7 +950,7 @@ export default function ForgeIDE({
 
       {/* 2. SYSTEM SIDEBAR INNER ACTION PANELS - (EXPANDED TO CHOSEN MODULE) */}
       {isSidebarOpen && (
-        <div className="col-span-1 xl:col-span-3 bg-slate-900/60 border-r border-slate-855 flex flex-col h-full overflow-hidden shrink-0">
+        <div className="w-full xl:w-72 bg-slate-900/60 border-b xl:border-b-0 xl:border-r border-slate-855 flex flex-col h-[400px] xl:h-full overflow-hidden shrink-0">
           
           {/* TAB 1: EXPLORER VIEW PANEL */}
           {sidebarTab === 'explorer' && (
@@ -1177,8 +1177,8 @@ export default function ForgeIDE({
         </div>
       )}
 
-      {/* 3. CENTER / MAIN MONACO TEXT EDITOR BLOCK (6 COLS INDEPENDENTLY SCALED) */}
-      <div className="col-span-1 xl:col-span-6 flex flex-col h-full overflow-hidden border-r border-slate-855">
+      {/* 3. CENTER / MAIN MONACO TEXT EDITOR BLOCK */}
+      <div className="flex-1 min-w-0 flex flex-col h-[650px] xl:h-full overflow-hidden border-b xl:border-b-0 xl:border-r border-slate-855 bg-slate-950">
         
         {/* TABS FILE SELECTION STRIP */}
         <div className="bg-slate-900 border-b border-slate-855 px-3 py-1.5 shrink-0 flex items-center justify-between overflow-x-auto scrollbar-none select-none">
@@ -1492,30 +1492,8 @@ export default function ForgeIDE({
 
         </div>
 
-        {/* EDITOR METRICS FOOTER ROW */}
-        <div className="bg-slate-900 border-t border-slate-855 px-4 py-1.5 select-none shrink-0 flex items-center justify-between text-[10.5px] font-mono text-slate-500">
-          <div className="flex items-center gap-3">
-            <span className="text-indigo-400 flex items-center gap-1">
-              <Cpu className="w-3.5 h-3.5" /> 
-              <span>Agent Mode: active</span>
-            </span>
-            <span className="hidden sm:inline border-l border-slate-800 pl-3">UTF-8</span>
-            <span className="hidden md:inline border-l border-slate-800 pl-3">Tab Size: 2</span>
-          </div>
-
-          {activeFile && (
-            <div className="flex items-center gap-3">
-              <span className="truncate max-w-[200px]" title={activeFile.path}>Path: {activeFile.path}</span>
-              <span className="border-l border-slate-805 pl-3 shrink-0">Lines: {activeFile.content?.split('\n').length || 0}</span>
-              <span className="hidden sm:inline border-l border-slate-805 pl-3 shrink-0">Bytes: {activeFile.content?.length || 0}</span>
-            </div>
-          )}
-        </div>
-
-      </div>
-
-      {/* 4. UPGRADED DOUBLE CONSOLE BOTTOM PANELS - (CI/CD TESTS vs ACTIVE PLAYGROUND SANDBOX) */}
-      <div className="col-span-1 xl:col-span-3 flex flex-col h-full overflow-hidden">
+        {/* 4. UPGRADED DOUBLE CONSOLE BOTTOM PANELS - (CI/CD TESTS vs ACTIVE PLAYGROUND SANDBOX) */}
+        <div className="h-[240px] xl:h-[260px] shrink-0 border-t border-slate-855 flex flex-col overflow-hidden bg-slate-950">
         <div className="bg-slate-900/60 p-4 border-b border-slate-855 flex items-center justify-between select-none shrink-0 gap-3">
           <div className="flex items-center gap-1.5">
             <Terminal className="w-4.5 h-4.5 text-indigo-400" />
@@ -1777,8 +1755,30 @@ export default function ForgeIDE({
 
       </div>
 
-      {/* 5. RIGHT SIDEBAR CHAT ASSISTANT COMPOSER COLLUSION PANELS (3 COLS) */}
-      <div className="col-span-1 xl:col-span-3 flex flex-col h-full bg-slate-900 shrink-0">
+        {/* EDITOR METRICS FOOTER ROW */}
+        <div className="bg-slate-900 border-t border-slate-855 px-4 py-1.5 select-none shrink-0 flex items-center justify-between text-[10.5px] font-mono text-slate-500">
+          <div className="flex items-center gap-3">
+            <span className="text-indigo-400 flex items-center gap-1">
+              <Cpu className="w-3.5 h-3.5" /> 
+              <span>Agent Mode: active</span>
+            </span>
+            <span className="hidden sm:inline border-l border-slate-800 pl-3">UTF-8</span>
+            <span className="hidden md:inline border-l border-slate-800 pl-3">Tab Size: 2</span>
+          </div>
+
+          {activeFile && (
+            <div className="flex items-center gap-3">
+              <span className="truncate max-w-[200px]" title={activeFile.path}>Path: {activeFile.path}</span>
+              <span className="border-l border-slate-805 pl-3 shrink-0">Lines: {activeFile.content?.split('\n').length || 0}</span>
+              <span className="hidden sm:inline border-l border-slate-805 pl-3 shrink-0">Bytes: {activeFile.content?.length || 0}</span>
+            </div>
+          )}
+        </div>
+
+      </div>
+
+      {/* 5. RIGHT SIDEBAR CHAT ASSISTANT COMPOSER COLLUSION PANELS */}
+      <div className="w-full xl:w-72 flex flex-col h-[450px] xl:h-full bg-slate-900 shrink-0 border-t xl:border-t-0 xl:border-l border-slate-855 animate-fade-in">
         <div className="p-4 border-b border-slate-855 select-none shrink-0 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4.5 h-4.5 text-indigo-400" />
