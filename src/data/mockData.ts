@@ -5,71 +5,9 @@
 
 import { ModelProvider, ModelConfig, Agent, WorkspaceFile, CodeKnowledgeGraph, PlatformTheme } from '../types';
 
-export const INITIAL_PROVIDERS: ModelProvider[] = [
-  {
-    id: 'google',
-    name: 'Google Gemini',
-    category: 'cloud',
-    apiKey: 'INJECTED_ENV_KEY',
-    status: 'connected',
-    latency: 180,
-    modelsCount: 6,
-  },
-  {
-    id: 'anthropic',
-    name: 'Anthropic Claude',
-    category: 'cloud',
-    apiKey: '••••••••••••••••••••••••',
-    status: 'connected',
-    latency: 240,
-    modelsCount: 4,
-  },
-  {
-    id: 'openai',
-    name: 'OpenAI GPT-5.5',
-    category: 'cloud',
-    apiKey: '',
-    status: 'disconnected',
-    modelsCount: 5,
-  },
-  {
-    id: 'deepseek',
-    name: 'DeepSeek AI V4',
-    category: 'cloud',
-    apiKey: '',
-    status: 'disconnected',
-    modelsCount: 3,
-  },
-  {
-    id: 'vllm_local',
-    name: 'Local vLLM',
-    category: 'local',
-    status: 'disconnected',
-    modelsCount: 0,
-  },
-  {
-    id: 'ollama_local',
-    name: 'Local Ollama',
-    category: 'local',
-    apiKey: 'http://localhost:11434',
-    status: 'connected',
-    latency: 15,
-    modelsCount: 4,
-  }
-];
+export const INITIAL_PROVIDERS: ModelProvider[] = [];
 
-export const INITIAL_MODELS: ModelConfig[] = [
-  { id: 'gemini-3.5-flash', name: 'Gemini 3.5 Flash (Default)', providerId: 'google', tier: 'fast', contextLength: '1M' },
-  { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro (Reasoning)', providerId: 'google', tier: 'reasoning', contextLength: '2M' },
-  { id: 'claude-3-7-sonnet', name: 'Claude 3.7 Sonnet', providerId: 'anthropic', tier: 'coding', contextLength: '200k' },
-  { id: 'claude-3-5-opus', name: 'Claude 3.5 Opus', providerId: 'anthropic', tier: 'flagship', contextLength: '200k' },
-  { id: 'gpt-5-omni', name: 'GPT-5 Omni (Preview)', providerId: 'openai', tier: 'flagship', contextLength: '128k' },
-  { id: 'gpt-4o-mini', name: 'GPT-4o Mini', providerId: 'openai', tier: 'fast', contextLength: '128k' },
-  { id: 'deepseek-v4', name: 'DeepSeek-V4', providerId: 'deepseek', tier: 'flagship', contextLength: '64k' },
-  { id: 'deepseek-coder-r1', name: 'DeepSeek-R1 (Reasoning)', providerId: 'deepseek', tier: 'reasoning', contextLength: '128k' },
-  { id: 'qwen-2.5-coder-7b', name: 'Qwen 2.5 Coder 7B (Ollama)', providerId: 'ollama_local', tier: 'coding', contextLength: '32k' },
-  { id: 'llama-3.3-8b', name: 'Llama 3.3 8B (Ollama)', providerId: 'ollama_local', tier: 'fast', contextLength: '32k' },
-];
+export const INITIAL_MODELS: ModelConfig[] = [];
 
 export const BUILTIN_AGENTS: Agent[] = [
   {

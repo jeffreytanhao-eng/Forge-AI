@@ -346,11 +346,15 @@ export default function AgentStudio({ agents, models, onAddAgent, onUpdateAgent,
                       <select
                         value={modelId}
                         onChange={(e) => setModelId(e.target.value)}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 font-mono"
                       >
-                        {models.map(m => (
-                          <option key={m.id} value={m.id}>{m.name}</option>
-                        ))}
+                        {models.length === 0 ? (
+                          <option value="">(⚠️ 请先前往 Model Hub 接入模型)</option>
+                        ) : (
+                          models.map(m => (
+                            <option key={m.id} value={m.id}>{m.name}</option>
+                          ))
+                        )}
                       </select>
                     </div>
                   </div>

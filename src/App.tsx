@@ -185,6 +185,8 @@ export default function App() {
           <ModelHub
             providers={providers}
             models={models}
+            setProviders={setProviders}
+            setModels={setModels}
             onUpdateProvider={handleUpdateProvider}
             onAddCustomModel={handleAddCustomModel}
           />
