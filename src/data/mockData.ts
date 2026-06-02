@@ -560,5 +560,5 @@ export const DEFAULT_THEME: PlatformTheme = {
   accentColor: '#10b981', // Emerald
   backgroundStyle: 'slate-cyber',
   fontFamily: 'Inter',
-  logoText: 'ForgeAI'
+  logoText: 'OpenIDE'
 };

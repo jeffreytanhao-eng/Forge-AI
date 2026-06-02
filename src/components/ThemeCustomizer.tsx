@@ -51,7 +51,7 @@ export default function ThemeCustomizer({ theme, onUpdateTheme }: ThemeCustomize
       <div className="flex items-center gap-3 pb-4 border-b border-slate-855 select-none">
         <Palette className="w-5.5 h-5.5 text-indigo-400 animate-pulse" />
         <div>
-          <h3 className="font-semibold text-slate-100">ForgeAI Custom Branding & Theme Center</h3>
+          <h3 className="font-semibold text-slate-100">OpenIDE Custom Branding & Theme Center</h3>
           <p className="text-xs text-slate-400">Tailor platform aesthetics, custom logo properties, and style variables instantly</p>
         </div>
       </div>
@@ -130,7 +130,7 @@ export default function ThemeCustomizer({ theme, onUpdateTheme }: ThemeCustomize
               type="text"
               value={theme.logoText}
               onChange={(e) => onUpdateTheme({ ...theme, logoText: e.target.value })}
-              placeholder="e.g. ForgeAI"
+              placeholder="e.g. OpenIDE"
               className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-505"
             />
             <span className="text-[10px] text-slate-500 mt-1 block">Modifies logo texts visible within left-hand menus and sidebars.</span>

@@ -111,7 +111,7 @@ export default function App() {
                 backgroundColor: `${theme.primaryColor}10`
               }}
             >
-              F
+              O
               <span className="absolute bottom-1 right-1 w-2.5 h-2.5 rounded-full bg-emerald-450 border border-slate-950 animate-ping" />
               <span className="absolute bottom-1 right-1 w-2.5 h-2.5 rounded-full bg-emerald-500 border border-slate-950" />
             </div>
@@ -128,7 +128,7 @@ export default function App() {
           {/* TAB ROUTING COMPONENT */}
           <nav className="flex items-center bg-slate-950 rounded-lg p-1 border border-slate-900 overflow-x-auto select-none gap-0.5">
             {[
-              { id: 'forge_ide', label: 'ForgeIDE', icon: Code },
+              { id: 'forge_ide', label: 'OpenIDE', icon: Code },
               { id: 'model_hub', label: 'Model Hub', icon: Server },
               { id: 'agent_studio', label: 'Agent Studio', icon: Bot },
               { id: 'knowledge_graph', label: 'Knowledge Graph', icon: Layers },

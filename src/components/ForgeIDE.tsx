@@ -10,6 +10,7 @@ import {
   Shield, Search, GitBranch, Settings, Plus, Trash, Edit3, Save, 
   PlayCircle, Eye, Sliders, Server, Cpu, Database, Info, FileText, CheckCircle
 } from 'lucide-react';
+import Editor from '@monaco-editor/react';
 import { Agent, WorkspaceFile, SessionMessage, DiffSuggestion, CodeKnowledgeGraph } from '../types';
 import { MOCK_WORKSPACES } from '../data/mockData';
 
@@ -896,7 +897,7 @@ export default function ForgeIDE({
         <div className="flex flex-col gap-5 items-center w-full">
           {/* Logo badge */}
           <span className="p-1 bgColor bg-indigo-500/10 rounded-lg border border-indigo-500/30 font-mono text-xs font-bold text-indigo-400">
-            F
+            O
           </span>
           
           <div className="flex flex-col gap-4 items-center w-full">
@@ -1289,28 +1290,61 @@ export default function ForgeIDE({
             </div>
 
           ) : activeFile ? (
-            /* MONACO STYLE CODE EDITOR FRAMEWORK */
-            <div className="flex-1 flex overflow-hidden">
-              
-              {/* LINE NUMBERS GAPE */}
-              <div className="w-10 bg-slate-950 border-r border-slate-900 py-4 select-none shrink-0 flex flex-col text-slate-700 font-mono text-xs text-right pr-2.5">
-                {activeFile.content?.split('\n').map((_, index) => (
-                  <div key={index} className="leading-relaxed h-5">{index + 1}</div>
-                ))}
+            /* REAL OPEN SOURCE INTEGRATED MONACO IDE WORKSPACE */
+            <div className="flex-1 flex flex-col overflow-hidden h-full">
+              <div className="bg-slate-900/90 border-b border-slate-850 px-4 py-2 flex items-center justify-between text-[11px] font-mono text-slate-400 select-none">
+                <div className="flex items-center gap-2">
+                  <span className="text-indigo-400 font-bold">⚡ OpenIDE Monaco Core</span>
+                  <span className="text-slate-600">|</span>
+                  <span className="text-slate-300 font-semibold">{activeFile.path}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="bg-slate-950 px-2 py-0.5 rounded text-[10px] text-slate-500 uppercase border border-slate-850">
+                    {activeFile.name.endsWith('.py') ? 'Python3' : activeFile.name.endsWith('.json') ? 'JSON' : 'TypeScript'}
+                  </span>
+                </div>
               </div>
-
-              {/* TEXT EDITING COMPONENT */}
-              <div className="flex-1 relative flex flex-col overflow-hidden">
-                <textarea
+              <div className="flex-1 relative overflow-hidden">
+                <Editor
+                  height="100%"
+                  theme="vs-dark"
+                  loading={
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950 font-mono text-xs gap-3">
+                      <Loader className="w-5 h-5 text-indigo-400 animate-spin" />
+                      <span className="text-slate-500">Loading open-source Monaco instance...</span>
+                    </div>
+                  }
+                  language={
+                    activeFile.name.endsWith('.py') 
+                      ? 'python' 
+                      : activeFile.name.endsWith('.json') 
+                        ? 'json' 
+                        : activeFile.name.endsWith('.html')
+                          ? 'html'
+                          : activeFile.name.endsWith('.css')
+                            ? 'css'
+                            : 'typescript'
+                  }
                   value={activeFile.content || ''}
-                  onChange={(e) => handleEditorChange(e.target.value)}
-                  className="flex-1 bg-transparent resize-none p-4 py-4 text-slate-300 font-mono text-xs leading-relaxed outline-none focus:ring-0 overflow-y-auto scrollbar-thin overflow-x-auto whitespace-pre placeholder:text-slate-800"
-                  spellCheck="false"
-                  placeholder={`# Write code parameters in ${activeFile.name}...`}
+                  onChange={(val) => handleEditorChange(val || '')}
+                  options={{
+                    minimap: { enabled: true, maxColumn: 80, scale: 0.75 },
+                    fontSize: 12,
+                    lineNumbers: 'on',
+                    roundedSelection: true,
+                    scrollBeyondLastLine: false,
+                    readOnly: false,
+                    automaticLayout: true,
+                    fontFamily: '"JetBrains Mono", "Fira Code", monospace',
+                    padding: { top: 12, bottom: 12 },
+                    cursorBlinking: 'smooth',
+                    tabSize: 2,
+                    insertSpaces: true,
+                  }}
                 />
 
                 {/* Micro toolbar features inside footer */}
-                <div className="absolute bottom-2 right-2 bg-slate-900/90 border border-slate-800/80 backdrop-blur rounded px-2 py-1 select-none flex items-center gap-2 shrink-0 font-mono text-[9px] text-slate-500">
+                <div className="absolute bottom-2 right-4 bg-slate-900/90 border border-slate-800/80 backdrop-blur rounded px-2 py-1 select-none flex items-center gap-2 shrink-0 font-mono text-[9px] text-slate-500 z-10">
                   <button
                     onClick={() => {
                       if (!activeFile.content) return;
@@ -1328,7 +1362,7 @@ export default function ForgeIDE({
                     onClick={() => {
                       setTerminalLogs(p => [...p, '[ANALYZER] Testing static typescript AST diagnostics... OK. 0 errors detected.']);
                     }}
-                    className="hover:text-amber-400 font-semibold uppercase cursor-pointer pr-2"
+                    className="hover:text-amber-400 font-semibold uppercase cursor-pointer"
                   >
                     Run AST Check
                   </button>
