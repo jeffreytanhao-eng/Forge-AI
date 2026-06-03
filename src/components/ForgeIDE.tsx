@@ -272,6 +272,96 @@ export default function ForgeIDE({
 
   const fileTreeRootNode = buildHierarchicalTree(workspaceFiles);
 
+  const [vibePendingDiffs, setVibePendingDiffs] = useState<any[]>([]);
+
+  const applyAllPending = () => {
+    let updated = [...workspaceFiles];
+    let hasChanges = false;
+    
+    vibePendingDiffs.forEach(diff => {
+      const normalized = diff.file.startsWith('/') ? diff.file : '/' + diff.file;
+      const fileIdx = updated.findIndex(f => f.path === normalized);
+      if (fileIdx >= 0) {
+        updated[fileIdx] = {
+          ...updated[fileIdx],
+          content: diff.content
+        };
+        hasChanges = true;
+      } else {
+        const fileName = normalized.split('/').pop() || 'untitled';
+        updated.push({
+          path: normalized,
+          name: fileName,
+          type: 'file',
+          content: diff.content
+        });
+        hasChanges = true;
+      }
+    });
+
+    if (hasChanges) {
+      onUpdateFiles(updated);
+      
+      // Update active file if its content was in pending diffs
+      if (activeFile) {
+        const matchingDiff = vibePendingDiffs.find(d => {
+          const norm = d.file.startsWith('/') ? d.file : '/' + d.file;
+          return norm === activeFile.path;
+        });
+        if (matchingDiff) {
+          setActiveFile({
+            ...activeFile,
+            content: matchingDiff.content
+          });
+        }
+      }
+      
+      onUpdateGraph();
+    }
+    
+    setVibePendingDiffs([]);
+  };
+
+  const acceptSingle = (index: number) => {
+    const diff = vibePendingDiffs[index];
+    let updated = [...workspaceFiles];
+    const normalized = diff.file.startsWith('/') ? diff.file : '/' + diff.file;
+    const fileIdx = updated.findIndex(f => f.path === normalized);
+    
+    if (fileIdx >= 0) {
+      updated[fileIdx] = {
+        ...updated[fileIdx],
+        content: diff.content
+      };
+    } else {
+      const fileName = normalized.split('/').pop() || 'untitled';
+      updated.push({
+        path: normalized,
+        name: fileName,
+        type: 'file',
+        content: diff.content
+      });
+    }
+
+    onUpdateFiles(updated);
+    
+    if (activeFile && normalized === activeFile.path) {
+      setActiveFile({
+        ...activeFile,
+        content: diff.content
+      });
+    }
+
+    onUpdateGraph();
+
+    // Remove from pending
+    setVibePendingDiffs(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const rejectSingle = (index: number) => {
+    setVibePendingDiffs(prev => prev.filter((_, i) => i !== index));
+  };
+
   // 主渲染 - 已改为 Codex 风格三栏布局
   return (
     <div className="flex h-screen overflow-hidden bg-zinc-950 text-white">
@@ -288,17 +378,72 @@ export default function ForgeIDE({
       {/* 中央：Monaco 编辑器 + Tabs */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Tab Bar */}
-        <div className="h-10 border-b border-zinc-800 flex items-center px-2 overflow-x-auto">
+        <div className="h-10 border-b border-zinc-800 flex items-center px-2 overflow-x-auto shrink-0 bg-zinc-900/40">
           {openTabs.map(path => {
             const file = workspaceFiles.find(f => f.path === path);
             return (
-              <div key={path} className={`flex items-center px-4 h-full border-r border-zinc-800 cursor-pointer hover:bg-zinc-900 ${activeFile?.path === path ? 'bg-zinc-900' : ''}`}>
+              <div key={path} className={`flex items-center px-4 h-full border-r border-zinc-800 cursor-pointer hover:bg-zinc-900 ${activeFile?.path === path ? 'bg-zinc-900 text-violet-400 font-medium' : 'text-zinc-400'}`}>
                 {file?.name}
-                <X className="ml-2 w-4 h-4" onClick={(e) => handleCloseTab(path, e)} />
+                <X className="ml-2 w-4 h-4 text-zinc-500 hover:text-zinc-255 cursor-pointer p-0.5 rounded-full hover:bg-zinc-800" onClick={(e) => handleCloseTab(path, e)} />
               </div>
             );
           })}
         </div>
+
+        {/* Pending Diff Preview Bar */}
+        {vibePendingDiffs.length > 0 && (
+          <div className="bg-zinc-900 border-b border-violet-950 p-3.5 flex flex-col gap-2 shadow-inner shrink-0 leading-normal animate-fade-in">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-violet-400 animate-pulse" />
+                <span className="font-semibold text-zinc-200 text-xs">
+                  Pending AI Changes ({vibePendingDiffs.length} files)
+                </span>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setVibePendingDiffs([])}
+                  className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-755 text-zinc-400 rounded text-xs select-none cursor-pointer border border-zinc-700 font-medium font-sans"
+                >
+                  Discard All
+                </button>
+                <button
+                  onClick={applyAllPending}
+                  className="px-2.5 py-1 bg-violet-600 hover:bg-violet-700 text-white rounded text-xs select-none cursor-pointer font-bold font-sans shadow-md"
+                >
+                  Apply All
+                </button>
+              </div>
+            </div>
+            
+            <div className="flex flex-wrap gap-2 pt-1 max-h-36 overflow-y-auto">
+              {vibePendingDiffs.map((df, di) => (
+                <div key={di} className="bg-zinc-950 border border-zinc-800 rounded-lg p-2 flex items-center justify-between text-xs font-mono min-w-[210px] hover:border-violet-500/50 transition-colors">
+                  <div className="flex flex-col min-w-0 pr-2">
+                    <span className="text-zinc-205 font-bold text-[11px] truncate">📂 {df.file}</span>
+                    <span className="text-[10px] text-zinc-500 truncate" title={df.description}>{df.description || 'Vibe Refactor'}</span>
+                  </div>
+                  <div className="flex gap-1.5 shrink-0">
+                    <button
+                      onClick={() => rejectSingle(di)}
+                      className="p-1 hover:bg-zinc-900 text-red-400 hover:text-red-300 rounded border border-transparent hover:border-red-900/20 shadow-none"
+                      title="Reject file"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => acceptSingle(di)}
+                      className="p-1 hover:bg-zinc-900 text-emerald-450 hover:text-emerald-450 rounded border border-transparent hover:border-emerald-900/20 shadow-none"
+                      title="Accept file"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Monaco 编辑器 */}
         <div className="flex-1">
@@ -321,12 +466,7 @@ export default function ForgeIDE({
 
       {/* 右侧：Codex 风格 Vibe Coding 面板 */}
       <div className="w-96 border-l border-zinc-800 flex-shrink-0 flex flex-col bg-zinc-950">
-        <div className="p-3 border-b border-zinc-800 font-medium flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-violet-400" />
-          Codex Vibe Agent
-        </div>
-        
-        <VibeComposer workspaceFiles={workspaceFiles} />
+        <VibeComposer workspaceFiles={workspaceFiles} onApplyDiff={setVibePendingDiffs} />
       </div>
     </div>
   );

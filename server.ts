@@ -261,6 +261,70 @@ Analyze the user's instructions and modify the provided file content. Produce th
   }
 });
 
+// Endpoint: Codex Vibe Agent generic integration endpoint
+app.post("/api/vibe", async (req, res) => {
+  const { prompt, apiKey } = req.body;
+  if (!prompt) {
+    return res.status(400).json({ error: "prompt is required" });
+  }
+
+  // Fallback if no API Key
+  if (!process.env.GEMINI_API_KEY && !apiKey) {
+    setTimeout(() => {
+      res.json({
+        plan: "本地系统模拟执行：已在 active workspace 中自动生成现代拟物风格暗黑登录页适配计划。",
+        diffs: [
+          {
+            file: "/src/components/ForgeIDE.tsx",
+            content: "// (Simulated Vibe Edit) Unified premium responsive dashboard integration setup",
+            description: "更新前端 IDE 的风格为暗黑扁平态磨砂玻璃风格，提升整体视觉节奏感与空间表现力。"
+          }
+        ]
+      });
+    }, 1500);
+    return;
+  }
+
+  try {
+    const ai = getAI();
+    const response = await ai.models.generateContent({
+      model: "gemini-3.5-flash",
+      contents: prompt,
+      config: {
+        systemInstruction: "You are ForgeAI's senior Code Architect. You generate complete layout updates and files diffs strictly in the requested JSON structure.",
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            plan: { type: Type.STRING, description: "本次执行的简要计划" },
+            diffs: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  file: { type: Type.STRING, description: "相对文件路径" },
+                  content: { type: Type.STRING, description: "完整的新文件代码" },
+                  description: { type: Type.STRING, description: "修改说明" }
+                },
+                required: ["file", "content", "description"]
+              },
+              description: "包含所有被改动的文件的一组 diff 列表"
+            }
+          },
+          required: ["plan", "diffs"]
+        }
+      }
+    });
+
+    const jsonText = response.text?.trim() || "{}";
+    const resultObj = JSON.parse(jsonText);
+    res.json(resultObj);
+  } catch (err: any) {
+    console.error("AI client error during /api/vibe", err);
+    res.status(500).json({ error: err.message || "Failed to compile vibe response" });
+  }
+});
+
 // Vite middleware / asset-serving integrations
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
