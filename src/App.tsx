@@ -128,7 +128,7 @@ export default function App() {
           {/* TAB ROUTING COMPONENT */}
           <nav className="flex items-center bg-slate-950 rounded-lg p-1 border border-slate-900 overflow-x-auto select-none gap-0.5">
             {[
-              { id: 'forge_ide', label: 'OpenIDE', icon: Code },
+              { id: 'forge_ide', label: 'CodeX', icon: Code },
               { id: 'model_hub', label: 'Model Hub', icon: Server },
               { id: 'agent_studio', label: 'Agent Studio', icon: Bot },
               { id: 'knowledge_graph', label: 'Knowledge Graph', icon: Layers },

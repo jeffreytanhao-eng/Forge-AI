@@ -152,6 +152,51 @@ uvicorn==0.28.0
 sqlalchemy==2.0.28
 pydantic==2.6.4
 `
+    },
+    {
+      path: '/VIBE_IDE_ARCH.md',
+      name: 'VIBE_IDE_ARCH.md',
+      type: 'file',
+      content: `# Forge-AI Vibe Coding IDE 集成 - 详细技术架构文档 v2.1
+
+**文档版本**：1.0（2026年6月）  
+**作者**：程序架构师（Grok）  
+**目标**：在现有 Forge-AI 项目中**直接嵌入现代化 Vibe Coding IDE**，实现沉浸式自然语言驱动开发，同时支持**云上模型**（Gemini 等）和**本地模型**（Ollama / LM Studio 等）双通道。
+
+---
+
+### 1. 架构概述（Hybrid Vibe Architecture）
+
+**核心设计原则**：
+- **模块化**：不破坏现有知识图谱引擎 (\`/src/utils/graphify.ts\`)。
+- **双模态 AI**：统一抽象层，支持云/本地无缝切换。
+- **实时联动**：Vibe Prompt → Agent 执行 → Monaco 编辑 → Graphify 更新。
+- **浏览器优先**：充分利用现有 React + Vite + Monaco 基础。
+
+---
+
+### 2. 项目代码结构
+
+基于当前仓库结构进行扩展：
+- **src/components/VibeIDE/**: Vibe Coding 主模块 (Composer, MonacoVibeEditor, AgentTaskBoard)
+- **src/utils/aiAdapter.ts**: 云/本地统一适配器
+- **src/utils/diffApplier.ts**: Monaco Diff 应用
+- **server.ts**: Node/Express Backend 服务
+
+---
+
+### 3. 核心模块代码设计（aiAdapter.ts）
+
+\`\`\`typescript
+export interface ModelConfig {
+  provider: 'gemini' | 'ollama' | 'openai-compatible';
+  model: string;
+  baseUrl?: string;     // 本地用 http://localhost:11434
+  apiKey?: string;
+  role: 'chat' | 'edit' | 'agent';
+}
+\`\`\`
+`
     }
   ],
   ts_utils: [
@@ -498,5 +543,5 @@ export const DEFAULT_THEME: PlatformTheme = {
   accentColor: '#10b981', // Emerald
   backgroundStyle: 'slate-cyber',
   fontFamily: 'Inter',
-  logoText: 'OpenIDE'
+  logoText: 'CodeX'
 };

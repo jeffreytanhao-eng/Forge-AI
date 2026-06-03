@@ -13,6 +13,7 @@ import {
 import Editor from '@monaco-editor/react';
 import { Agent, WorkspaceFile, SessionMessage, DiffSuggestion, CodeKnowledgeGraph } from '../types';
 import { MOCK_WORKSPACES } from '../data/mockData';
+import VibeArchitectureViewer from './VibeArchitectureViewer';
 
 interface ForgeIDEProps {
   agents: Agent[];
@@ -68,6 +69,7 @@ export default function ForgeIDE({
   const [renameTargetName, setRenameTargetName] = useState('');
 
   // Terminal compilation and testing console log outputs
+  const [isConsoleCollapsed, setIsConsoleCollapsed] = useState(false);
   const [activeOutputTab, setActiveOutputTab] = useState<'ci_cd' | 'playground'>('playground');
   const [terminalLogs, setTerminalLogs] = useState<string[]>([
     '[SYSTEM] Booting IDE compiler node...',
@@ -890,67 +892,49 @@ export default function ForgeIDE({
   const fileTreeRootNode = buildHierarchicalTree(workspaceFiles);
 
   return (
-    <div id="forge_ide_workspace" className="flex flex-col xl:flex-row gap-4 h-auto xl:h-[calc(100vh-140px)] xl:min-h-[680px] bg-slate-950 text-slate-300 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl relative p-1">
+    <div id="code_x_workspace" className="flex flex-col xl:flex-row gap-4 h-auto xl:h-[calc(100vh-140px)] xl:min-h-[680px] bg-slate-950 text-slate-300 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl relative p-1 transition-all">
       
-      {/* 1. VS CODE STYLE EXTREMEMENT PRO SYSTEM SIDE BAR ICONS (width: 48px) */}
-      <div className="hidden sm:flex flex-col justify-between items-center bg-slate-900 border-r border-slate-855 py-4 w-12 select-none shrink-0">
-        <div className="flex flex-col gap-5 items-center w-full">
-          {/* Logo badge */}
-          <span className="p-1 bgColor bg-indigo-500/10 rounded-lg border border-indigo-500/30 font-mono text-xs font-bold text-indigo-400">
-            O
-          </span>
+      {/* 2. SYSTEM SIDEBAR INNER ACTION PANELS - (EXPANDED TO CHOSEN MODULE OR COLLAPSED PRECISELY) */}
+      {isSidebarOpen ? (
+        <div className="w-full xl:w-76 bg-slate-900 border-b xl:border-b-0 xl:border-r border-slate-855 flex flex-col h-[420px] xl:h-full overflow-hidden shrink-0">
           
-          <div className="flex flex-col gap-4 items-center w-full">
-            <button
-              onClick={() => handleToggleSidebar('explorer')}
-              title="File Explorer"
-              className={`p-2 rounded-lg transition-colors relative ${sidebarTab === 'explorer' && isSidebarOpen ? 'bg-slate-800 text-indigo-400' : 'text-slate-500 hover:text-slate-300'}`}
-            >
-              <Folder className="w-5 h-5" />
-              {modifiedFilesCount > 0 && (
-                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-500 border border-slate-900" />
-              )}
-            </button>
-            
-            <button
-              onClick={() => handleToggleSidebar('search')}
-              title="Find in Workspace Files"
-              className={`p-2 rounded-lg transition-colors ${sidebarTab === 'search' && isSidebarOpen ? 'bg-slate-800 text-indigo-400' : 'text-slate-500 hover:text-slate-300'}`}
-            >
-              <Search className="w-5 h-5" />
-            </button>
+          {/* Sleek integrated CodeX Tab strip at the top of Left Sidebar */}
+          <div className="p-3 border-b border-slate-855 bg-slate-950/40 select-none shrink-0 flex items-center justify-between gap-2">
+            <div className="flex bg-slate-955 p-0.5 rounded-lg border border-slate-850 flex-1">
+              {[
+                { id: 'explorer', label: 'Files', icon: Folder },
+                { id: 'search', label: 'Search', icon: Search },
+                { id: 'git', label: 'Git', icon: GitBranch },
+                { id: 'settings', label: 'Setup', icon: Settings }
+              ].map(tab => {
+                const TabIcon = tab.icon;
+                const isActive = sidebarTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setSidebarTab(tab.id as any)}
+                    className={`flex-1 py-1 px-1 text-[10.5px] font-mono leading-none rounded-md flex flex-col sm:flex-row items-center justify-center gap-1 transition-all ${
+                      isActive 
+                        ? 'bg-slate-800 text-indigo-400 font-bold border border-slate-700/60 shadow' 
+                        : 'text-slate-500 hover:text-slate-300'
+                    }`}
+                    title={tab.label}
+                  >
+                    <TabIcon className="w-3.5 h-3.5" />
+                    <span className="hidden md:inline">{tab.label}</span>
+                  </button>
+                );
+              })}
+            </div>
 
             <button
-              onClick={() => handleToggleSidebar('git')}
-              title="Git Source Control"
-              className={`p-2 rounded-lg transition-colors relative ${sidebarTab === 'git' && isSidebarOpen ? 'bg-slate-800 text-indigo-400' : 'text-slate-500 hover:text-slate-300'}`}
+              onClick={() => setIsSidebarOpen(false)}
+              title="Minimize workspace explorer to full code mode"
+              className="p-1 px-1.5 cursor-pointer bg-slate-955 hover:bg-slate-850 text-slate-500 hover:text-slate-300 rounded border border-slate-800 transition-colors shrink-0"
             >
-              <GitBranch className="w-5 h-5" />
-              {modifiedFilesCount > 0 && (
-                <span className="absolute top-1 right-1 px-1.5 py-0.5 text-[8.5px] font-mono leading-none bg-indigo-500 text-slate-950 font-bold rounded-full border border-slate-900 scale-90">
-                  {modifiedFilesCount}
-                </span>
-              )}
-            </button>
-
-            <button
-              onClick={() => handleToggleSidebar('settings')}
-              title="Workspace Settings"
-              className={`p-2 rounded-lg transition-colors ${sidebarTab === 'settings' && isSidebarOpen ? 'bg-slate-800 text-indigo-400' : 'text-slate-500 hover:text-slate-300'}`}
-            >
-              <Settings className="w-5 h-5" />
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
-        </div>
-
-        <div className="flex flex-col gap-3 items-center">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" title="System connected OK" />
-        </div>
-      </div>
-
-      {/* 2. SYSTEM SIDEBAR INNER ACTION PANELS - (EXPANDED TO CHOSEN MODULE) */}
-      {isSidebarOpen && (
-        <div className="w-full xl:w-72 bg-slate-900/60 border-b xl:border-b-0 xl:border-r border-slate-855 flex flex-col h-[400px] xl:h-full overflow-hidden shrink-0">
           
           {/* TAB 1: EXPLORER VIEW PANEL */}
           {sidebarTab === 'explorer' && (
@@ -1175,6 +1159,16 @@ export default function ForgeIDE({
           )}
 
         </div>
+      ) : (
+        <div className="hidden xl:flex flex-col items-center bg-slate-900 border-r border-slate-855 py-4 w-12 select-none shrink-0 animate-fade-in gap-4">
+          <button
+            onClick={() => setIsSidebarOpen(true)}
+            title="Maximize CodeX Workspace Sidebar"
+            className="p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-400 hover:text-indigo-450 shadow shadow-indigo-950/20 hover:border-slate-705 transition-all flex items-center justify-center hover:scale-105 active:scale-95 cursor-pointer"
+          >
+            <Folder className="w-4.5 h-4.5" />
+          </button>
+        </div>
       )}
 
       {/* 3. CENTER / MAIN MONACO TEXT EDITOR BLOCK */}
@@ -1290,11 +1284,14 @@ export default function ForgeIDE({
             </div>
 
           ) : activeFile ? (
-            /* REAL OPEN SOURCE INTEGRATED MONACO IDE WORKSPACE */
-            <div className="flex-1 flex flex-col overflow-hidden h-full">
+            (activeFile.path === '/VIBE_IDE_ARCH.md' ? (
+              <VibeArchitectureViewer />
+            ) : (
+              /* REAL OPEN SOURCE INTEGRATED MONACO IDE WORKSPACE */
+              <div className="flex-1 flex flex-col overflow-hidden h-full">
               <div className="bg-slate-900/90 border-b border-slate-850 px-4 py-2 flex items-center justify-between text-[11px] font-mono text-slate-400 select-none">
                 <div className="flex items-center gap-2">
-                  <span className="text-indigo-400 font-bold">⚡ OpenIDE Monaco Core</span>
+                  <span className="text-indigo-400 font-bold">⚡ CodeX Engine Core</span>
                   <span className="text-slate-600">|</span>
                   <span className="text-slate-300 font-semibold">{activeFile.path}</span>
                 </div>
@@ -1368,9 +1365,9 @@ export default function ForgeIDE({
                   </button>
                 </div>
               </div>
-
             </div>
-          ) : (
+          )
+        )) : (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-6 select-none animate-pulse">
               <Code className="w-12 h-12 text-slate-800 mb-2 animate-bounce" />
               <span className="text-xs text-slate-550 font-mono">No active module. Click a directory asset in explorer sidebar to begin edits.</span>
@@ -1493,39 +1490,49 @@ export default function ForgeIDE({
         </div>
 
         {/* 4. UPGRADED DOUBLE CONSOLE BOTTOM PANELS - (CI/CD TESTS vs ACTIVE PLAYGROUND SANDBOX) */}
-        <div className="h-[240px] xl:h-[260px] shrink-0 border-t border-slate-855 flex flex-col overflow-hidden bg-slate-950">
-        <div className="bg-slate-900/60 p-4 border-b border-slate-855 flex items-center justify-between select-none shrink-0 gap-3">
-          <div className="flex items-center gap-1.5">
-            <Terminal className="w-4.5 h-4.5 text-indigo-400" />
-            <span className="text-xs font-mono font-bold uppercase tracking-widest text-slate-300">Run consoles</span>
-          </div>
+        <div className={`${isConsoleCollapsed ? 'h-[42px]' : 'h-[240px] xl:h-[260px]'} transition-all duration-300 shrink-0 border-t border-slate-855 flex flex-col overflow-hidden bg-slate-950`}>
+        <div className="bg-slate-900/60 p-2.5 px-4 border-b border-slate-855 flex items-center justify-between select-none shrink-0 gap-3">
+          <button
+            onClick={() => setIsConsoleCollapsed(!isConsoleCollapsed)}
+            className="flex items-center gap-2 cursor-pointer text-left hover:text-slate-205 focus:outline-none"
+            title={isConsoleCollapsed ? "Expand consoles" : "Collapse consoles"}
+          >
+            <Terminal className="w-4 h-4 text-indigo-400" />
+            <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-slate-300">Run consoles</span>
+            <span className="text-[9px] text-indigo-400 bg-indigo-950/40 border border-indigo-900/30 px-1.5 py-0.5 rounded uppercase font-bold">
+              {isConsoleCollapsed ? 'Expand' : 'Collapse'}
+            </span>
+          </button>
 
-          <div className="flex bg-slate-950 p-0.5 rounded border border-slate-850">
-            <button
-              onClick={() => setActiveOutputTab('playground')}
-              className={`px-2.5 py-1 text-[10px] font-mono font-semibold rounded uppercase transition-all ${
-                activeOutputTab === 'playground' 
-                  ? 'bg-indigo-600 text-slate-950 font-bold' 
-                  : 'text-slate-500 hover:text-slate-350'
-              }`}
-            >
-              Interactive sandbox
-            </button>
-            <button
-              onClick={() => setActiveOutputTab('ci_cd')}
-              className={`px-2.5 py-1 text-[10px] font-mono font-semibold rounded uppercase transition-all ${
-                activeOutputTab === 'ci_cd' 
-                  ? 'bg-indigo-600 text-slate-950 font-bold' 
-                  : 'text-slate-500 hover:text-slate-350'
-              }`}
-            >
-              CI/CD pytest
-            </button>
-          </div>
+          {!isConsoleCollapsed && (
+            <div className="flex bg-slate-950 p-0.5 rounded border border-slate-850">
+              <button
+                onClick={() => setActiveOutputTab('playground')}
+                className={`px-2.5 py-1 text-[10px] font-mono font-semibold rounded uppercase transition-all ${
+                  activeOutputTab === 'playground' 
+                    ? 'bg-indigo-600 text-slate-950 font-bold' 
+                    : 'text-slate-500 hover:text-slate-350'
+                }`}
+              >
+                Interactive sandbox
+              </button>
+              <button
+                onClick={() => setActiveOutputTab('ci_cd')}
+                className={`px-2.5 py-1 text-[10px] font-mono font-semibold rounded uppercase transition-all ${
+                  activeOutputTab === 'ci_cd' 
+                    ? 'bg-indigo-600 text-slate-950 font-bold' 
+                    : 'text-slate-500 hover:text-slate-350'
+                }`}
+              >
+                CI/CD pytest
+              </button>
+            </div>
+          )}
         </div>
 
         {/* INNER RENDER OF THE TWO OUTPUT CONSOLES */}
-        <div className="flex-1 overflow-hidden flex flex-col bg-slate-950">
+        {!isConsoleCollapsed && (
+          <div className="flex-1 overflow-hidden flex flex-col bg-slate-950">
           
           {/* LOGICAL VIEW 1: DYNAMIC SANDBOX PLATFORM EXECUTION (REAL RESULTS!) */}
           {activeOutputTab === 'playground' && (
@@ -1752,6 +1759,7 @@ export default function ForgeIDE({
           )}
 
         </div>
+        )}
 
       </div>
 
