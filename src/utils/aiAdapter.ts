@@ -1,11 +1,11 @@
 import { useModelStore } from '../stores/useModelStore';
-import { graphifyProject } from './graphify';
+import { generateGraphifyGraph } from './graphify';
 
 export class AIAdapter {
   static async sendVibePrompt(prompt: string, workspaceFiles: any[]) {
     const { currentProvider, modelName, baseUrl } = useModelStore.getState();
     
-    const graphContext = await graphifyProject(workspaceFiles);
+    const graphContext = generateGraphifyGraph(workspaceFiles);
 
     const fullPrompt = `你是 Codex 风格的 Vibe Coding Agent。
 知识图谱上下文: ${JSON.stringify(graphContext).slice(0, 6000)}

@@ -134,20 +134,155 @@ export default function ForgeIDE({
     setIsPythonServerRunning(false);
   }, [workspaceName]);
 
-  // ... (保持您原有的所有 handleFileClick, handleCloseTab, handleEditorChange 等函数不变)
-  const handleFileClick = (file: WorkspaceFile) => { /* 原有代码 */ };
-  const handleCloseTab = (path: string, e: React.MouseEvent) => { /* 原有代码 */ };
-  const handleEditorChange = (newVal: string) => { /* 原有代码 */ };
-  const isFileModified = (path: string): boolean => { /* 原有代码 */ };
-  const buildHierarchicalTree = (files: WorkspaceFile[]) => { /* 原有代码 */ };
+  // Click file from tree
+  const handleFileClick = (file: WorkspaceFile) => {
+    if (file.type === 'directory') {
+      setCollapsedFolders(prev => ({ ...prev, [file.path]: !prev[file.path] }));
+      return;
+    }
+    setActiveFile(file);
+    if (!openTabs.includes(file.path)) {
+      setOpenTabs(prev => [...prev, file.path]);
+    }
+  };
+
+  // Close tab
+  const handleCloseTab = (path: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updatedTabs = openTabs.filter(t => t !== path);
+    setOpenTabs(updatedTabs);
+    
+    if (activeFile?.path === path) {
+      if (updatedTabs.length > 0) {
+        const correspondingFile = workspaceFiles.find(f => f.path === updatedTabs[0]);
+        if (correspondingFile) setActiveFile(correspondingFile);
+      } else {
+        setActiveFile(null);
+      }
+    }
+  };
+
+  // Safe callback updates
+  const handleEditorChange = (newVal: string) => {
+    if (!activeFile) return;
+    
+    const updatedFiles = workspaceFiles.map(f => {
+      if (f.path === activeFile.path) {
+        return { ...f, content: newVal };
+      }
+      return f;
+    });
+    onUpdateFiles(updatedFiles);
+    setActiveFile(prev => prev ? { ...prev, content: newVal } : null);
+  };
+
+  // Check if file is dirty or modified
+  const isFileModified = (path: string): boolean => {
+    const currentContent = workspaceFiles.find(f => f.path === path)?.content || '';
+    const baseline = baselineFiles[path] || '';
+    return currentContent !== baseline;
+  };
+
+  interface VisualTreeNode {
+    name: string;
+    path: string;
+    type: 'file' | 'directory';
+    file?: WorkspaceFile;
+    children: { [key: string]: VisualTreeNode };
+  }
+
+  // Track and build unified, clean folder paths tree recursively
+  const buildHierarchicalTree = (files: WorkspaceFile[]): VisualTreeNode => {
+    const root: VisualTreeNode = { name: 'root', path: '', type: 'directory', children: {} };
+    
+    files.forEach(f => {
+      const parts = f.path.split('/').filter(Boolean);
+      let current = root;
+      
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        const isLastPathSegment = i === parts.length - 1;
+        const currentPath = '/' + parts.slice(0, i + 1).join('/');
+        
+        if (!current.children[part]) {
+          current.children[part] = {
+            name: part,
+            path: currentPath,
+            type: (isLastPathSegment && f.type === 'file') ? 'file' : 'directory',
+            file: (isLastPathSegment && f.type === 'file') ? f : undefined,
+            children: {}
+          };
+        }
+        current = current.children[part];
+      }
+    });
+    
+    return root;
+  };
+
+  const recursiveTreeElements = (node: VisualTreeNode) => {
+    return Object.values(node.children).map(child => {
+      const isDir = child.type === 'directory';
+      const isCollapsed = collapsedFolders[child.path];
+      const isDirty = child.file ? isFileModified(child.file.path) : false;
+
+      return (
+        <div key={child.path} className="select-none text-zinc-350">
+          <div
+            onClick={() => {
+              if (isDir) {
+                setCollapsedFolders(prev => ({ ...prev, [child.path]: !isCollapsed }));
+              } else if (child.file) {
+                handleFileClick(child.file);
+              }
+            }}
+            className={`group flex items-center justify-between px-2 py-1 rounded-md text-xs cursor-pointer transition-all ${
+              activeFile?.path === child.path 
+                ? 'bg-zinc-800 text-violet-400 font-medium' 
+                : 'hover:bg-zinc-900 hover:text-zinc-200'
+            }`}
+          >
+            <div className="flex items-center gap-2 truncate">
+              {isDir ? (
+                <>
+                  {isCollapsed ? <ChevronRight className="w-3.5 h-3.5 text-zinc-500 shrink-0" /> : <ChevronDown className="w-3.5 h-3.5 text-zinc-500 shrink-0" />}
+                  <Folder className="w-4 h-4 text-amber-500 fill-amber-500/20 shrink-0" />
+                  <span className="truncate">{child.name}</span>
+                </>
+              ) : (
+                <>
+                  <span className="w-3.5 shrink-0" />
+                  <File className={`w-3.5 h-3.5 shrink-0 ${child.name.endsWith('.py') ? 'text-blue-400' : 'text-emerald-400'}`} />
+                  <span className="truncate text-zinc-300 group-hover:text-white">{child.name}</span>
+                  {isDirty && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 shadow-sm" title="Modified" />}
+                </>
+              )}
+            </div>
+          </div>
+
+          {isDir && !isCollapsed && (
+            <div className="pl-3 border-l border-zinc-800 ml-2 mt-0.5 space-y-0.5">
+              {recursiveTreeElements(child)}
+            </div>
+          )}
+        </div>
+      );
+    });
+  };
+
+  const fileTreeRootNode = buildHierarchicalTree(workspaceFiles);
 
   // 主渲染 - 已改为 Codex 风格三栏布局
   return (
     <div className="flex h-screen overflow-hidden bg-zinc-950 text-white">
       {/* 左侧：文件浏览器 + 图谱 */}
-      <div className="w-72 border-r border-zinc-800 flex-shrink-0 overflow-auto">
-        {/* 您原有的左侧 Sidebar 内容保持不变 */}
-        {/* 这里省略了您原有的 sidebar 代码，请保留原文件中的左侧部分 */}
+      <div className="w-72 border-r border-zinc-800 flex-shrink-0 overflow-auto p-4 flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <span className="text-xs uppercase font-mono tracking-wider font-semibold text-zinc-400">Workspace Files</span>
+        </div>
+        <div className="flex-1 overflow-y-auto space-y-1 font-mono">
+          {recursiveTreeElements(fileTreeRootNode)}
+        </div>
       </div>
 
       {/* 中央：Monaco 编辑器 + Tabs */}
