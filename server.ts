@@ -419,6 +419,57 @@ app.post("/api/wiki/import", async (req, res) => {
   }
 });
 
+// Endpoint: Claude (Anthropic) API
+app.post("/api/anthropic", async (req, res) => {
+  const { model = 'claude-3-5-sonnet-20241022', maxTokens = 4096, systemPrompt, prompt, apiKey } = req.body;
+  if (!prompt) {
+    return res.status(400).json({ error: 'prompt is required' });
+  }
+
+  try {
+    // Simulate Claude response (mock)
+    // In real production, you would use @anthropic-ai/sdk to call actual Claude API
+    const mockPlan = `重构分析完成:
+
+1. 首先分析项目结构和代码依赖
+2. 识别需要优化的核心组件
+3. 实现重构方案，保持功能完整性
+4. 更新相关文档和测试
+
+执行 ${prompt.slice(0, 50)}...`;
+
+    const mockDiffs = [
+      {
+        file: '/mock-component.tsx',
+        content: `// 重构后的组件代码
+import React from 'react';
+
+export const OptimizedComponent = () => {
+  return (
+    <div className="optimized">
+      <h1>重构完成!</h1>
+    </div>
+  );
+};`,
+        description: '优化了组件结构，添加了类型安全'
+      }
+    ];
+
+    res.json({
+      plan: mockPlan,
+      diffs: mockDiffs,
+      usage: { inputTokens: prompt.length, outputTokens: mockPlan.length + mockDiffs[0].content.length }
+    });
+  } catch (err: any) {
+    console.error('Error calling Claude API', err);
+    res.status(500).json({ 
+      plan: 'Error: Claude API 调用失败',
+      diffs: [],
+      error: err.message 
+    });
+  }
+});
+
 // Endpoint: Codex Vibe Agent generic integration endpoint
 app.post("/api/vibe", async (req, res) => {
   const { prompt, apiKey } = req.body;

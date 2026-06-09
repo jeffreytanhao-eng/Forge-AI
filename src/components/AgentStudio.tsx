@@ -214,6 +214,7 @@ export default function AgentStudio({ agents, models, skills, wikiPages, onAddAg
       temperature: 0.3,
       maxTokens: 4096,
       tools: ['read_file', 'edit_file', 'grep'],
+      skills: [],
       permissionTier: 'workspace_write',
       createdAt: new Date().toISOString()
     };

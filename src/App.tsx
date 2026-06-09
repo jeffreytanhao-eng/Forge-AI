@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { Bot, Server, Layers, Code, Palette, Cpu, CheckCircle, Database, HelpCircle, LayoutDashboard, Terminal, Wrench, BookOpen } from 'lucide-react';
 import { ModelProvider, ModelConfig, Agent, PlatformTheme, WorkspaceFile, Skill, WikiPage } from './types';
 import { INITIAL_PROVIDERS, INITIAL_MODELS, BUILTIN_AGENTS, DEFAULT_THEME, MOCK_WORKSPACES, INITIAL_SKILLS, INITIAL_WIKI_PAGES } from './data/mockData';
+import { useAgentStore } from './stores/useAgentStore';
 
 import ModelHub from './components/ModelHub';
 import AgentStudio from './components/AgentStudio';
@@ -16,7 +17,13 @@ import ThemeCustomizer from './components/ThemeCustomizer';
 import SkillHub from './components/SkillHub';
 import WikiKnowledgeBase from './components/WikiKnowledgeBase';
 
+// 初始化 Agent Registry
+import './agents/index';
+
 export default function App() {
+  // 确保 useAgentStore 正确初始化
+  const { setCurrentAgent } = useAgentStore();
+  
   // Navigation State Configuration
   const [activeTab, setActiveTab] = useState<'model_hub' | 'agent_studio' | 'forge_ide' | 'knowledge_graph' | 'theme_customizer' | 'skill_hub' | 'wiki'>('forge_ide');
   

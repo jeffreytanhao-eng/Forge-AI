@@ -2,7 +2,7 @@
  * ForgeIDE.tsx - Codex Vibe Coding 集成版 (最新完整版 - Phase 3 生产级体验)
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Editor, { DiffEditor } from '@monaco-editor/react';
 import { 
   X, Sparkles, Folder, File, ChevronRight, ChevronDown, Check, 
@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { VibeComposer } from './VibeIDE/VibeComposer';
 import { WorkspaceFile, Skill } from '../types';
+import { generateGraphifyGraph } from '../utils/graphify';
 
 interface ForgeIDEProps {
   agents?: any[];
@@ -66,6 +67,16 @@ export default function ForgeIDE({
   const [skillOutput, setSkillOutput] = useState('');
   const [isExecutingSkill, setIsExecutingSkill] = useState(false);
   const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
+
+  // Generate Knowledge Graph (memoized)
+  const knowledgeGraph = useMemo(() => {
+    try {
+      return generateGraphifyGraph(workspaceFiles);
+    } catch (e) {
+      console.warn('知识图谱生成失败', e);
+      return { nodes: [], edges: [] };
+    }
+  }, [workspaceFiles]);
 
   // Initialize workspace files tree defaults
   useEffect(() => {
@@ -576,6 +587,9 @@ export default function ForgeIDE({
           vibeHistory={vibeHistory}
           onUndoSession={handleUndoSession}
           onUndoLast={handleUndoLastApplied}
+          currentFile={activeFile}
+          knowledgeGraph={knowledgeGraph}
+          skills={skills}
         />
       </div>
 
