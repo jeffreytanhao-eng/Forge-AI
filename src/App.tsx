@@ -4,24 +4,28 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Bot, Server, Layers, Code, Palette, Cpu, CheckCircle, Database, HelpCircle, LayoutDashboard, Terminal } from 'lucide-react';
-import { ModelProvider, ModelConfig, Agent, PlatformTheme, WorkspaceFile } from './types';
-import { INITIAL_PROVIDERS, INITIAL_MODELS, BUILTIN_AGENTS, DEFAULT_THEME, MOCK_WORKSPACES } from './data/mockData';
+import { Bot, Server, Layers, Code, Palette, Cpu, CheckCircle, Database, HelpCircle, LayoutDashboard, Terminal, Wrench, BookOpen } from 'lucide-react';
+import { ModelProvider, ModelConfig, Agent, PlatformTheme, WorkspaceFile, Skill, WikiPage } from './types';
+import { INITIAL_PROVIDERS, INITIAL_MODELS, BUILTIN_AGENTS, DEFAULT_THEME, MOCK_WORKSPACES, INITIAL_SKILLS, INITIAL_WIKI_PAGES } from './data/mockData';
 
 import ModelHub from './components/ModelHub';
 import AgentStudio from './components/AgentStudio';
 import ForgeIDE from './components/ForgeIDE';
 import KnowledgeGraphView from './components/KnowledgeGraphView';
 import ThemeCustomizer from './components/ThemeCustomizer';
+import SkillHub from './components/SkillHub';
+import WikiKnowledgeBase from './components/WikiKnowledgeBase';
 
 export default function App() {
   // Navigation State Configuration
-  const [activeTab, setActiveTab] = useState<'model_hub' | 'agent_studio' | 'forge_ide' | 'knowledge_graph' | 'theme_customizer'>('forge_ide');
+  const [activeTab, setActiveTab] = useState<'model_hub' | 'agent_studio' | 'forge_ide' | 'knowledge_graph' | 'theme_customizer' | 'skill_hub' | 'wiki'>('forge_ide');
   
   // App state
   const [providers, setProviders] = useState<ModelProvider[]>(INITIAL_PROVIDERS);
   const [models, setModels] = useState<ModelConfig[]>(INITIAL_MODELS);
   const [agents, setAgents] = useState<Agent[]>(BUILTIN_AGENTS);
+  const [skills, setSkills] = useState<Skill[]>(INITIAL_SKILLS);
+  const [wikiPages, setWikiPages] = useState<WikiPage[]>(INITIAL_WIKI_PAGES);
   
   const [activeAgentId, setActiveAgentId] = useState<string>('agent_coder');
   const [workspaceName, setWorkspaceName] = useState<'python_api' | 'ts_utils' | 'forge_platform'>('python_api');
@@ -79,6 +83,30 @@ export default function App() {
     setGraphRevision(prev => prev + 1);
   };
 
+  const handleAddSkill = (skill: Skill) => {
+    setSkills(prev => [skill, ...prev]);
+  };
+
+  const handleUpdateSkill = (skill: Skill) => {
+    setSkills(prev => prev.map(s => s.id === skill.id ? skill : s));
+  };
+
+  const handleDeleteSkill = (id: string) => {
+    setSkills(prev => prev.filter(s => s.id !== id));
+  };
+
+  const handleAddWikiPage = (page: WikiPage) => {
+    setWikiPages(prev => [page, ...prev]);
+  };
+
+  const handleUpdateWikiPage = (page: WikiPage) => {
+    setWikiPages(prev => prev.map(p => p.id === page.id ? page : p));
+  };
+
+  const handleDeleteWikiPage = (id: string) => {
+    setWikiPages(prev => prev.filter(p => p.id !== id));
+  };
+
   // Compute active background styles classes matching Theme choices
   const getBackgroundClass = () => {
     switch (theme.backgroundStyle) {
@@ -132,6 +160,8 @@ export default function App() {
               { id: 'model_hub', label: 'Model Hub', icon: Server },
               { id: 'agent_studio', label: 'Agent Studio', icon: Bot },
               { id: 'knowledge_graph', label: 'Knowledge Graph', icon: Layers },
+              { id: 'skill_hub', label: 'Skill Hub', icon: Wrench },
+              { id: 'wiki', label: 'Wiki', icon: BookOpen },
               { id: 'theme_customizer', label: 'Branding', icon: Palette }
             ].map(tab => {
               const TabIcon = tab.icon;
@@ -196,10 +226,12 @@ export default function App() {
           <AgentStudio
             agents={agents}
             models={models}
+            skills={skills}
+            wikiPages={wikiPages}
             onAddAgent={handleAddAgent}
             onUpdateAgent={handleUpdateAgent}
             onDeleteAgent={handleDeleteAgent}
-            defaultModelId="gemini-3.5-flash"
+            defaultModelId={models[0]?.id || 'gemini-3.5-flash'}
           />
         )}
 
@@ -213,6 +245,7 @@ export default function App() {
             onUpdateGraph={handleUpdateGraphRevision}
             workspaceFiles={workspaceFiles[workspaceName] || []}
             onUpdateFiles={(files) => setWorkspaceFiles(prev => ({ ...prev, [workspaceName]: files }))}
+            skills={skills}
           />
         )}
 
@@ -229,6 +262,24 @@ export default function App() {
           <ThemeCustomizer
             theme={theme}
             onUpdateTheme={handleUpdateTheme}
+          />
+        )}
+
+        {activeTab === 'skill_hub' && (
+          <SkillHub
+            skills={skills}
+            onAddSkill={handleAddSkill}
+            onUpdateSkill={handleUpdateSkill}
+            onDeleteSkill={handleDeleteSkill}
+          />
+        )}
+
+        {activeTab === 'wiki' && (
+          <WikiKnowledgeBase
+            pages={wikiPages}
+            onAddPage={handleAddWikiPage}
+            onUpdatePage={handleUpdateWikiPage}
+            onDeletePage={handleDeleteWikiPage}
           />
         )}
 

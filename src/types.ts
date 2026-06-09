@@ -47,6 +47,7 @@ export interface Agent {
   temperature: number;
   maxTokens: number;
   tools: string[]; // ['read_file', 'edit_file', 'grep', 'terminal', 'knowledge_graph']
+  skills: string[]; // Array of skill IDs bound to this agent
   permissionTier: PermissionTier;
   createdAt: string;
   isBuiltIn?: boolean;
@@ -105,4 +106,72 @@ export interface PlatformTheme {
   fontFamily: string; // e.g. 'Inter', 'Space Grotesk'
   logoUrl?: string;
   logoText: string;
+}
+
+// ==================== Skill Hub Types ====================
+export type SkillCategory = 'automation' | 'analysis' | 'integration' | 'utility' | 'custom';
+
+export type SkillTriggerType = 'manual' | 'event' | 'schedule' | 'api';
+
+export interface SkillParameter {
+  id: string;
+  name: string;
+  type: 'string' | 'number' | 'boolean' | 'select' | 'file';
+  required: boolean;
+  defaultValue?: string | number | boolean;
+  options?: string[];
+  description: string;
+}
+
+export interface Skill {
+  id: string;
+  name: string;
+  description: string;
+  category: SkillCategory;
+  icon: string; // emoji or icon name
+  triggerType: SkillTriggerType;
+  parameters: SkillParameter[];
+  code: string; // JavaScript/Python code to execute
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+  tags: string[];
+}
+
+export interface SkillExecutionResult {
+  skillId: string;
+  success: boolean;
+  output: string;
+  error?: string;
+  timestamp: string;
+}
+
+export type DocumentFormat = 'markdown' | 'text' | 'json' | 'yaml' | 'python' | 'typescript';
+
+export interface SkillExport {
+  version: string;
+  skills: Skill[];
+  exportedAt: string;
+}
+
+// ==================== Wiki Knowledge Base Types ====================
+export type WikiDocumentType = 'md' | 'txt' | 'docx' | 'pdf';
+
+export interface WikiPage {
+  id: string;
+  title: string;
+  content: string;
+  format: DocumentFormat;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+  parentId?: string;
+  children: string[];
+}
+
+export interface DocumentImportResult {
+  success: boolean;
+  pages: WikiPage[];
+  errors: string[];
+  warnings: string[];
 }

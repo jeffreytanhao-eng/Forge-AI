@@ -261,6 +261,164 @@ Analyze the user's instructions and modify the provided file content. Produce th
   }
 });
 
+// Endpoint: Execute Skill
+app.post("/api/skill/execute", async (req, res) => {
+  const { skillId, skill, parameters } = req.body;
+  if (!skillId || !skill) {
+    return res.status(400).json({ error: "skillId and skill are required" });
+  }
+
+  try {
+    // Simulated execution (could be replaced with real execution)
+    const output = `Skill "${skill.name}" executed successfully!
+      
+Skill ID: ${skillId}
+Category: ${skill.category}
+Trigger: ${skill.triggerType}
+
+Parameters received: ${JSON.stringify(parameters || {})}
+
+Code snippet:
+${skill.code.slice(0, 200)}${skill.code.length > 200 ? '...' : ''}
+
+---
+Execution completed at ${new Date().toLocaleString()}`;
+
+    res.json({ success: true, output });
+  } catch (err: any) {
+    console.error("Error executing skill", err);
+    res.json({ success: false, output: `Execution failed: ${err.message}` });
+  }
+});
+
+// Endpoint: Import Skills
+app.post("/api/skill/import", async (req, res) => {
+  const { skills } = req.body;
+  if (!skills || !Array.isArray(skills)) {
+    return res.status(400).json({ error: "skills array is required" });
+  }
+
+  try {
+    const importedCount = skills.length;
+    res.json({ 
+      success: true, 
+      message: `Successfully imported ${importedCount} skill(s)`,
+      importedCount 
+    });
+  } catch (err: any) {
+    console.error("Error importing skills", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Endpoint: Export Skills
+app.post("/api/skill/export", async (req, res) => {
+  const { skillIds } = req.body;
+  
+  try {
+    res.json({
+      success: true,
+      version: "1.0.0",
+      skills: skillIds || [],
+      exportedAt: new Date().toISOString()
+    });
+  } catch (err: any) {
+    console.error("Error exporting skills", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Endpoint: Create Wiki Page
+app.post("/api/wiki/create", async (req, res) => {
+  const { title, content, format, tags } = req.body;
+  if (!title || !content) {
+    return res.status(400).json({ error: "title and content are required" });
+  }
+
+  try {
+    const newPage = {
+      id: `wiki_${Date.now()}`,
+      title,
+      content,
+      format: format || 'markdown',
+      tags: tags || [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      children: []
+    };
+
+    res.json({ success: true, page: newPage });
+  } catch (err: any) {
+    console.error("Error creating wiki page", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Endpoint: Update Wiki Page
+app.put("/api/wiki/update", async (req, res) => {
+  const { id, title, content, format, tags } = req.body;
+  if (!id) {
+    return res.status(400).json({ error: "id is required" });
+  }
+
+  try {
+    const updatedPage = {
+      id,
+      title,
+      content,
+      format,
+      tags,
+      updatedAt: new Date().toISOString()
+    };
+
+    res.json({ success: true, page: updatedPage });
+  } catch (err: any) {
+    console.error("Error updating wiki page", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Endpoint: Delete Wiki Page
+app.delete("/api/wiki/delete", async (req, res) => {
+  const { id } = req.body;
+  if (!id) {
+    return res.status(400).json({ error: "id is required" });
+  }
+
+  try {
+    res.json({ success: true, message: `Page ${id} deleted successfully` });
+  } catch (err: any) {
+    console.error("Error deleting wiki page", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Endpoint: Import Document to Wiki
+app.post("/api/wiki/import", async (req, res) => {
+  const { fileName, content, format } = req.body;
+  if (!fileName || !content) {
+    return res.status(400).json({ error: "fileName and content are required" });
+  }
+
+  try {
+    const newPage = {
+      id: `wiki_import_${Date.now()}`,
+      title: fileName.replace(/\.[^/.]+$/, ''),
+      content,
+      format: format || 'text',
+      tags: ['imported'],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      children: []
+    };
+
+    res.json({ success: true, page: newPage });
+  } catch (err: any) {
+    console.error("Error importing document", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Endpoint: Codex Vibe Agent generic integration endpoint
 app.post("/api/vibe", async (req, res) => {
   const { prompt, apiKey } = req.body;

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ModelProvider, ModelConfig, Agent, WorkspaceFile, CodeKnowledgeGraph, PlatformTheme } from '../types';
+import { ModelProvider, ModelConfig, Agent, WorkspaceFile, CodeKnowledgeGraph, PlatformTheme, Skill, WikiPage } from '../types';
 
 export const INITIAL_PROVIDERS: ModelProvider[] = [];
 
@@ -20,6 +20,7 @@ export const BUILTIN_AGENTS: Agent[] = [
     temperature: 0.2,
     maxTokens: 4096,
     tools: ['read_file', 'edit_file', 'grep', 'knowledge_graph'],
+    skills: ['skill_file_processor', 'skill_data_analyzer'],
     permissionTier: 'workspace_write',
     createdAt: '2026-05-01T00:00:00Z',
     isBuiltIn: true,
@@ -34,6 +35,7 @@ export const BUILTIN_AGENTS: Agent[] = [
     temperature: 0.1,
     maxTokens: 2048,
     tools: ['read_file', 'grep', 'knowledge_graph'],
+    skills: [],
     permissionTier: 'read_only',
     createdAt: '2026-05-15T00:00:00Z',
     isBuiltIn: true,
@@ -48,6 +50,7 @@ export const BUILTIN_AGENTS: Agent[] = [
     temperature: 0.4,
     maxTokens: 4096,
     tools: ['read_file', 'edit_file', 'terminal', 'grep'],
+    skills: ['skill_api_integrator', 'skill_backup_auto'],
     permissionTier: 'shell',
     createdAt: '2026-05-20T00:00:00Z',
     isBuiltIn: true,
@@ -545,3 +548,286 @@ export const DEFAULT_THEME: PlatformTheme = {
   fontFamily: 'Inter',
   logoText: 'CodeX'
 };
+
+export const INITIAL_SKILLS: Skill[] = [
+  {
+    id: 'skill_file_processor',
+    name: '文件处理工具',
+    description: '批量处理文本文件，支持内容搜索、替换、格式化等操作',
+    category: 'utility',
+    icon: '📁',
+    triggerType: 'manual',
+    parameters: [
+      { id: 'param_path', name: '文件路径', type: 'string', required: true, description: '要处理的文件路径' },
+      { id: 'param_pattern', name: '搜索模式', type: 'string', required: false, description: '正则表达式搜索模式' }
+    ],
+    code: `// 文件处理脚本示例
+async function processFiles(params) {
+  const { path, pattern } = params;
+  console.log(\`Processing files in: \${path}\`);
+  console.log(\`Search pattern: \${pattern || 'none'}\`);
+  return { success: true, message: '文件处理完成' };
+}`,
+    enabled: true,
+    createdAt: '2026-05-20T00:00:00Z',
+    updatedAt: '2026-05-25T10:30:00Z',
+    tags: ['files', 'processing', 'utility']
+  },
+  {
+    id: 'skill_data_analyzer',
+    name: '数据分析师',
+    description: '对数据进行统计分析、可视化和报告生成',
+    category: 'analysis',
+    icon: '📊',
+    triggerType: 'manual',
+    parameters: [
+      { id: 'param_dataset', name: '数据集', type: 'file', required: true, description: 'CSV 或 JSON 数据文件' },
+      { id: 'param_method', name: '分析方法', type: 'select', required: true, options: ['统计摘要', '相关性分析', '趋势预测'], description: '选择分析方法' }
+    ],
+    code: `// 数据分析脚本示例
+async function analyzeData(params) {
+  const { dataset, method } = params;
+  console.log(\`Analyzing dataset: \${dataset}\`);
+  console.log(\`Method: \${method}\`);
+  return { 
+    success: true, 
+    result: { summary: '数据分析完成', insights: ['数据趋势向上', '相关性强'] }
+  };
+}`,
+    enabled: true,
+    createdAt: '2026-05-22T00:00:00Z',
+    updatedAt: '2026-05-28T15:45:00Z',
+    tags: ['data', 'analysis', 'statistics']
+  },
+  {
+    id: 'skill_api_integrator',
+    name: 'API 集成器',
+    description: '连接外部 API 服务，实现数据同步和自动化工作流',
+    category: 'integration',
+    icon: '🔗',
+    triggerType: 'event',
+    parameters: [
+      { id: 'param_endpoint', name: 'API 端点', type: 'string', required: true, description: '目标 API URL' },
+      { id: 'param_method', name: 'HTTP 方法', type: 'select', required: true, options: ['GET', 'POST', 'PUT', 'DELETE'], description: 'HTTP 请求方法' },
+      { id: 'param_auth', name: '认证密钥', type: 'string', required: false, description: 'API 密钥或令牌' }
+    ],
+    code: `// API 集成脚本示例
+async function callAPI(params) {
+  const { endpoint, method, auth } = params;
+  const headers = auth ? { Authorization: \`Bearer \${auth}\` } : {};
+  
+  const response = await fetch(endpoint, {
+    method,
+    headers: { ...headers, 'Content-Type': 'application/json' }
+  });
+  
+  return { success: response.ok, data: await response.json() };
+}`,
+    enabled: true,
+    createdAt: '2026-05-24T00:00:00Z',
+    updatedAt: '2026-05-30T09:20:00Z',
+    tags: ['api', 'integration', 'workflow']
+  },
+  {
+    id: 'skill_backup_auto',
+    name: '自动备份',
+    description: '定期自动备份工作区文件到指定位置',
+    category: 'automation',
+    icon: '💾',
+    triggerType: 'schedule',
+    parameters: [
+      { id: 'param_interval', name: '备份间隔', type: 'select', required: true, options: ['每小时', '每天', '每周'], description: '备份频率' },
+      { id: 'param_target', name: '目标路径', type: 'string', required: true, description: '备份存储位置' }
+    ],
+    code: `// 自动备份脚本示例
+async function performBackup(params) {
+  const { interval, target } = params;
+  console.log(\`Starting backup to: \${target}\`);
+  console.log(\`Interval: \${interval}\`);
+  
+  // 模拟备份操作
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  return { success: true, message: \`备份完成，存储到: \${target}\` };
+}`,
+    enabled: false,
+    createdAt: '2026-05-26T00:00:00Z',
+    updatedAt: '2026-06-01T14:00:00Z',
+    tags: ['backup', 'automation', 'storage']
+  }
+];
+
+export const INITIAL_WIKI_PAGES: WikiPage[] = [
+  {
+    id: 'wiki_introduction',
+    title: '欢迎使用 ForgeAI',
+    content: `# ForgeAI 开发者平台
+
+欢迎来到 ForgeAI 开发者平台！这是一个集成了 AI 能力的现代化开发环境。
+
+## 主要功能
+
+### 1. CodeX 编辑器
+强大的代码编辑器，支持多种编程语言和智能代码补全。
+
+### 2. Model Hub
+管理和配置各种 AI 模型，支持云端和本地模型。
+
+### 3. Agent Studio
+创建和管理 AI 智能体，赋予它们各种工具能力。
+
+### 4. Knowledge Graph
+可视化代码库的知识图谱，理解代码结构和依赖关系。
+
+### 5. Skill Hub
+存储和管理各种技能能力，支持导入导出。
+
+### 6. Wiki 知识库
+文档管理中心，支持多种格式的文档导入。
+
+## 快速开始
+
+1. 点击顶部导航切换到不同模块
+2. 在 Model Hub 中配置您的 AI 模型
+3. 创建智能体并赋予它们工具
+4. 在 CodeX 中编写代码
+5. 使用 Knowledge Graph 分析代码结构
+
+---
+
+*文档版本: 1.0*`,
+    format: 'markdown',
+    tags: ['welcome', 'introduction', 'guide'],
+    createdAt: '2026-06-01T00:00:00Z',
+    updatedAt: '2026-06-01T10:00:00Z',
+    children: []
+  },
+  {
+    id: 'wiki_api_reference',
+    title: 'API 参考文档',
+    content: `# API 参考文档
+
+## 基础端点
+
+### GET /api/health
+
+检查服务健康状态
+
+**响应示例:**
+\`\`\`json
+{
+  "status": "healthy",
+  "timestamp": "2026-06-01T12:00:00Z"
+}
+\`\`\`
+
+### POST /api/agent/chat
+
+与智能体进行对话
+
+**请求体:**
+\`\`\`json
+{
+  "agentId": "agent_coder",
+  "message": "帮我写一个快速排序算法",
+  "context": {}
+}
+\`\`\`
+
+**响应示例:**
+\`\`\`json
+{
+  "success": true,
+  "response": "好的，这是快速排序算法的实现...",
+  "tokens": 150
+}
+\`\`\`
+
+### POST /api/skill/execute
+
+执行技能
+
+**请求体:**
+\`\`\`json
+{
+  "skillId": "skill_data_analyzer",
+  "parameters": {
+    "dataset": "data.csv",
+    "method": "统计摘要"
+  }
+}
+\`\`\`
+
+## 错误码
+
+| 状态码 | 含义 |
+|--------|------|
+| 400 | 请求参数错误 |
+| 401 | 未授权 |
+| 404 | 资源未找到 |
+| 500 | 服务器内部错误 |`,
+    format: 'markdown',
+    tags: ['api', 'reference', 'documentation'],
+    createdAt: '2026-06-02T00:00:00Z',
+    updatedAt: '2026-06-03T15:30:00Z',
+    children: []
+  },
+  {
+    id: 'wiki_best_practices',
+    title: '最佳实践指南',
+    content: `# 最佳实践指南
+
+## 智能体开发
+
+### 1. 系统提示词设计
+
+保持系统提示词简洁明确，明确智能体的角色和能力范围。
+
+### 2. 工具使用
+
+合理使用工具，避免不必要的调用。
+
+### 3. 权限管理
+
+根据智能体的用途分配适当的权限等级：
+- read_only: 仅读取权限
+- workspace_write: 可修改工作区文件
+- shell: 可执行终端命令
+
+## 技能开发
+
+### 1. 参数设计
+
+为技能设计清晰的参数，标记必填项。
+
+### 2. 错误处理
+
+在技能代码中添加适当的错误处理。
+
+### 3. 代码规范
+
+遵循统一的代码风格，添加必要的注释。
+
+## 知识库管理
+
+### 1. 文档分类
+
+使用标签对文档进行分类管理。
+
+### 2. 版本控制
+
+定期更新文档，保持内容最新。
+
+### 3. 格式选择
+
+根据内容类型选择合适的文档格式：
+- Markdown: 文档说明、指南
+- JSON: 配置文件
+- Python/TypeScript: 代码示例`,
+    format: 'markdown',
+    tags: ['best-practices', 'guide', 'development'],
+    createdAt: '2026-06-04T00:00:00Z',
+    updatedAt: '2026-06-05T09:15:00Z',
+    children: []
+  }
+];

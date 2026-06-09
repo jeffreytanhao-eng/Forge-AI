@@ -66,11 +66,38 @@ export default function KnowledgeGraphView({ workspaceName, workspaceFiles, grap
     return { node: targetNode, rel: edge.type };
   }).filter(item => item.node);
 
-  // Filter nodes according to search parameter
-  const filteredNodes = graphData.nodes.filter(n => 
-    n.label.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    n.filePath.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter nodes according to search parameter / Semantic NLP Query Analyzer
+  const filteredNodes = graphData.nodes.filter(n => {
+    if (!searchTerm) return true;
+    const query = searchTerm.toLowerCase();
+    
+    // Direct matches
+    if (n.label.toLowerCase().includes(query) || n.filePath.toLowerCase().includes(query)) {
+      return true;
+    }
+    
+    // Cognitive helper parsing
+    if (query.includes('function') || query.includes('方法') || query.includes('函数')) {
+      if (n.type === 'function') return true;
+    }
+    if (query.includes('class') || query.includes('类') || query.includes('类型')) {
+      if (n.type === 'class') return true;
+    }
+    if (query.includes('file') || query.includes('文件') || query.includes('代码')) {
+      if (n.type === 'file') return true;
+    }
+    
+    // Association query terms: e.g. "调用", "calls", "dependencies"
+    if (query.includes('call') || query.includes('调用') || query.includes('depends') || query.includes('依赖')) {
+      const isAssociated = graphData.edges.some(edge => 
+        (edge.source === n.id || edge.target === n.id) && 
+        (edge.type === 'calls' || edge.type === 'imports')
+      );
+      if (isAssociated) return true;
+    }
+    
+    return false;
+  });
 
   const isEdgeRelated = (edge: CodeGraphEdge) => {
     if (!selectedNode && !hoveredNodeId) return true;
@@ -293,10 +320,22 @@ export default function KnowledgeGraphView({ workspaceName, workspaceFiles, grap
               const ndY = node.y || 100;
               const isSelected = selectedNode?.id === node.id;
               const isHovered = hoveredNodeId === node.id;
-              const isMatchedBySearch = searchTerm ? node.label.toLowerCase().includes(searchTerm.toLowerCase()) : true;
+              
+              // Smart semantic matching check for visual fade-out
+              const isMatchedBySearch = !searchTerm || (
+                node.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                node.filePath.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (node.type === 'function' && (searchTerm.toLowerCase().includes('function') || searchTerm.toLowerCase().includes('函数'))) ||
+                (node.type === 'class' && (searchTerm.toLowerCase().includes('class') || searchTerm.toLowerCase().includes('类'))) ||
+                (node.type === 'file' && (searchTerm.toLowerCase().includes('file') || searchTerm.toLowerCase().includes('文件')))
+              );
+
+              // Detect changes in LocalStorage applied by Vibe Code Agent
+              const isVibeHotspot = node.type === 'file' && localStorage.getItem('vibe_modified_path_' + node.filePath) === 'true';
 
               // Node Category Color Mapping
               const colorClass = 
+                isVibeHotspot ? 'fill-violet-400 shadow-violet-500/40' :
                 node.type === 'file' ? 'fill-blue-500 shadow-blue-500/20' :
                 node.type === 'class' ? 'fill-rose-500 shadow-rose-500/20' :
                 'fill-amber-500 shadow-amber-500/20';
@@ -309,6 +348,17 @@ export default function KnowledgeGraphView({ workspaceName, workspaceFiles, grap
                   onMouseLeave={() => setHoveredNodeId(null)}
                   className="cursor-pointer group"
                 >
+                  {/* Pulsating cosmic hotspot halo for files modified by Vibe Compiler */}
+                  {isVibeHotspot && (
+                    <circle
+                      cx={ndX}
+                      cy={ndY}
+                      r={18}
+                      className="fill-none stroke-violet-500 stroke-2 animate-pulse"
+                      strokeDasharray="3,3"
+                    />
+                  )}
+
                   {/* Outer selection glow */}
                   {(isSelected || isHovered) && (
                     <circle

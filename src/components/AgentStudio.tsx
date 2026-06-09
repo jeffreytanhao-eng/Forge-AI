@@ -4,19 +4,21 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Bot, Wrench, Shield, Sliders, Play, Plus, Sparkles, Send, Trash, Edit, RefreshCw, Layers, Check, Loader } from 'lucide-react';
-import { Agent, ModelConfig, PermissionTier } from '../types';
+import { Bot, Wrench, Shield, Sliders, Play, Plus, Sparkles, Send, Trash, Edit, RefreshCw, Layers, Check, Loader, BookOpen } from 'lucide-react';
+import { Agent, ModelConfig, PermissionTier, Skill, WikiPage } from '../types';
 
 interface AgentStudioProps {
   agents: Agent[];
   models: ModelConfig[];
+  skills: Skill[];
+  wikiPages: WikiPage[];
   onAddAgent: (newAgent: Agent) => void;
   onUpdateAgent: (updated: Agent) => void;
   onDeleteAgent: (id: string) => void;
   defaultModelId: string;
 }
 
-export default function AgentStudio({ agents, models, onAddAgent, onUpdateAgent, onDeleteAgent, defaultModelId }: AgentStudioProps) {
+export default function AgentStudio({ agents, models, skills, wikiPages, onAddAgent, onUpdateAgent, onDeleteAgent, defaultModelId }: AgentStudioProps) {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   
   // Custom generator state
@@ -24,7 +26,7 @@ export default function AgentStudio({ agents, models, onAddAgent, onUpdateAgent,
   const [isGenerating, setIsGenerating] = useState(false);
   
   // Configuration editing states
-  const [activeTab, setActiveTab] = useState<'profile' | 'prompt' | 'tools' | 'params'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'prompt' | 'tools' | 'skills' | 'knowledge' | 'params'>('profile');
   const [name, setName] = useState('');
   const [avatar, setAvatar] = useState('🤖');
   const [description, setDescription] = useState('');
@@ -33,7 +35,12 @@ export default function AgentStudio({ agents, models, onAddAgent, onUpdateAgent,
   const [temperature, setTemperature] = useState(0.4);
   const [maxTokens, setMaxTokens] = useState(4096);
   const [tools, setTools] = useState<string[]>([]);
+  const [agentSkills, setAgentSkills] = useState<string[]>([]);
   const [permissionTier, setPermissionTier] = useState<PermissionTier>('workspace_write');
+  
+  // Knowledge search state
+  const [knowledgeSearch, setKnowledgeSearch] = useState('');
+  const [searchResults, setSearchResults] = useState<WikiPage[]>([]);
 
   // Sandbox chat simulation state
   const [chatInput, setChatInput] = useState('');
@@ -59,12 +66,31 @@ export default function AgentStudio({ agents, models, onAddAgent, onUpdateAgent,
     setTemperature(agent.temperature);
     setMaxTokens(agent.maxTokens);
     setTools(agent.tools);
+    setAgentSkills(agent.skills || []);
     setPermissionTier(agent.permissionTier);
     
     // Reset test chat
     setChatMessages([
       { role: 'assistant', content: `Hello! I am the ${agent.name} Sandbox simulator. Customize my parameters and query my instructions here.` }
     ]);
+  };
+
+  const handleToggleSkill = (skillId: string) => {
+    setAgentSkills(prev => prev.includes(skillId) ? prev.filter(s => s !== skillId) : [...prev, skillId]);
+  };
+
+  const handleKnowledgeSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setKnowledgeSearch(query);
+    if (!query) {
+      setSearchResults([]);
+      return;
+    }
+    const results = wikiPages.filter(page => 
+      page.title.toLowerCase().includes(query.toLowerCase()) ||
+      page.content.toLowerCase().includes(query.toLowerCase())
+    );
+    setSearchResults(results);
   };
 
   const handleSaveAgent = (e: React.FormEvent) => {
@@ -81,6 +107,7 @@ export default function AgentStudio({ agents, models, onAddAgent, onUpdateAgent,
       temperature,
       maxTokens,
       tools,
+      skills: agentSkills,
       permissionTier,
     };
 
@@ -296,6 +323,20 @@ export default function AgentStudio({ agents, models, onAddAgent, onUpdateAgent,
                 </button>
                 <button
                   type="button"
+                  onClick={() => setActiveTab('skills')}
+                  className={`pb-2.5 px-3 border-b-2 font-medium transition-colors ${activeTab === 'skills' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-400 hover:text-slate-300'}`}
+                >
+                  Skills
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('knowledge')}
+                  className={`pb-2.5 px-3 border-b-2 font-medium transition-colors ${activeTab === 'knowledge' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-400 hover:text-slate-300'}`}
+                >
+                  Knowledge
+                </button>
+                <button
+                  type="button"
                   onClick={() => setActiveTab('params')}
                   className={`pb-2.5 px-3 border-b-2 font-medium transition-colors ${activeTab === 'params' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-400 hover:text-slate-300'}`}
                 >
@@ -423,7 +464,108 @@ export default function AgentStudio({ agents, models, onAddAgent, onUpdateAgent,
                   </div>
                 )}
 
-                {/* TAB 4: Core sliders configurations */}
+                {/* TAB 5: Skill Binding */}
+                {activeTab === 'skills' && (
+                  <div className="space-y-4 fade-in">
+                    <div>
+                      <label className="block text-[10.5px] font-mono uppercase tracking-wider text-slate-500 mb-2">Bind Skills to Agent</label>
+                      <p className="text-[11px] text-slate-500 mb-3">Select skills from Skill Hub that this agent can execute</p>
+                      <div className="space-y-2">
+                        {skills.length === 0 ? (
+                          <div className="text-center py-4 text-slate-500 text-xs">
+                            <Wrench className="w-6 h-6 mx-auto mb-2 opacity-50" />
+                            <p>No skills available. Add skills in Skill Hub first.</p>
+                          </div>
+                        ) : (
+                          skills.map(skill => {
+                            const isChecked = agentSkills.includes(skill.id);
+                            return (
+                              <label key={skill.id} className="flex items-center justify-between p-2.5 rounded bg-slate-950/60 border border-slate-900/80 hover:border-slate-800 cursor-pointer">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-lg">{skill.icon}</span>
+                                  <div className="text-left">
+                                    <span className="text-xs font-semibold text-slate-200">{skill.name}</span>
+                                    <p className="text-[10px] text-slate-500">{skill.description}</p>
+                                  </div>
+                                </div>
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={() => handleToggleSkill(skill.id)}
+                                  className="w-4 h-4 accent-indigo-500 text-indigo-505 bg-slate-950 rounded"
+                                />
+                              </label>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-slate-400">
+                      <span>Bound Skills: {agentSkills.length}</span>
+                      <button
+                        type="button"
+                        onClick={() => setAgentSkills([])}
+                        className="text-red-400 hover:text-red-300"
+                      >
+                        Clear All
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 6: Knowledge Base Access */}
+                {activeTab === 'knowledge' && (
+                  <div className="space-y-4 fade-in">
+                    <div>
+                      <label className="block text-[10.5px] font-mono uppercase tracking-wider text-slate-500 mb-2">Knowledge Base Search</label>
+                      <input
+                        type="text"
+                        value={knowledgeSearch}
+                        onChange={handleKnowledgeSearch}
+                        placeholder="Search documentation..."
+                        className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+                      />
+                    </div>
+
+                    <div className="max-h-[200px] overflow-y-auto">
+                      {searchResults.length === 0 ? (
+                        <div className="text-center py-6 text-slate-500">
+                          <BookOpen className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                          {knowledgeSearch ? (
+                            <p className="text-xs">No results found for "{knowledgeSearch}"</p>
+                          ) : (
+                            <p className="text-xs">Search the knowledge base to find relevant documentation</p>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {searchResults.map(page => (
+                            <div key={page.id} className="p-3 rounded bg-slate-950/60 border border-slate-900/80 hover:border-slate-800">
+                              <h4 className="text-xs font-semibold text-slate-200">{page.title}</h4>
+                              <p className="text-[10px] text-slate-500 mt-1 line-clamp-2">{page.content.slice(0, 100)}...</p>
+                              <div className="flex items-center gap-2 mt-2">
+                                {page.tags.slice(0, 3).map(tag => (
+                                  <span key={tag} className="text-[9px] bg-slate-900 px-1.5 py-0.5 rounded text-slate-400">
+                                    #{tag}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-800">
+                      <div className="flex items-center justify-between text-[10px] text-slate-500">
+                        <span>Total Documents: {wikiPages.length}</span>
+                        <span>Search Results: {searchResults.length}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 7: Core sliders configurations */}
                 {activeTab === 'params' && (
                   <div className="space-y-4 fade-in">
                     <div>
