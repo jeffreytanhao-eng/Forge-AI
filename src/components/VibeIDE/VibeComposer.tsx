@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Send, Loader2, Sparkles, MessageSquare, Terminal as TerminalIcon, History as HistoryIcon, RotateCcw } from 'lucide-react';
 import { AgentSelector } from './AgentSelector';
+import { VibeDiffPreview } from './VibeDiffPreview';
 import { useAgentStore } from '../../stores/useAgentStore';
 import { AgentContext } from '../../types/agent';
 
@@ -13,6 +14,12 @@ interface VibeComposerProps {
   currentFile?: any;
   knowledgeGraph?: any;
   skills?: any[];
+}
+
+interface DiffItem {
+  file: string;
+  content: string;
+  description?: string;
 }
 
 export const VibeComposer: React.FC<VibeComposerProps> = ({
@@ -30,6 +37,7 @@ export const VibeComposer: React.FC<VibeComposerProps> = ({
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [streamingPlan, setStreamingPlan] = useState('');
+  const [pendingDiffs, setPendingDiffs] = useState<DiffItem[]>([]);
 
   const [terminalOutput, setTerminalOutput] = useState<any[]>([
     { type: 'system', content: 'vibe_ide % Type "help" for commands' }
@@ -51,6 +59,7 @@ export const VibeComposer: React.FC<VibeComposerProps> = ({
     setInput('');
     setLoading(true);
     setStreamingPlan('');
+    setPendingDiffs([]);
 
     try {
       const context: AgentContext = {
@@ -71,6 +80,13 @@ export const VibeComposer: React.FC<VibeComposerProps> = ({
           if (chunk.type === 'done') {
             finalResult = chunk.result;
           }
+          if (chunk.type === 'error') {
+            setMessages(prev => [...prev, {
+              role: 'system',
+              content: `Error: ${chunk.error}`,
+              timestamp: new Date().toLocaleTimeString()
+            }]);
+          }
         }
 
         if (finalResult) {
@@ -80,7 +96,9 @@ export const VibeComposer: React.FC<VibeComposerProps> = ({
             timestamp: new Date().toLocaleTimeString(),
             agent: currentAgent.name
           }]);
-          if (finalResult.diffs?.length) onApplyDiff(finalResult.diffs);
+          if (finalResult.diffs?.length) {
+            setPendingDiffs(finalResult.diffs);
+          }
         }
       } else {
         // 普通 Agent（Vibe 等）
@@ -91,7 +109,9 @@ export const VibeComposer: React.FC<VibeComposerProps> = ({
           timestamp: new Date().toLocaleTimeString(),
           agent: currentAgent.name
         }]);
-        if (result.diffs?.length) onApplyDiff(result.diffs);
+        if (result.diffs?.length) {
+          setPendingDiffs(result.diffs);
+        }
       }
     } catch (error: any) {
       setMessages(prev => [...prev, {
@@ -103,6 +123,27 @@ export const VibeComposer: React.FC<VibeComposerProps> = ({
       setLoading(false);
       setStreamingPlan('');
     }
+  };
+
+  // ==================== Diff Preview handlers ====================
+  const handleAcceptDiff = (diff: DiffItem) => {
+    onApplyDiff([diff]);
+    setPendingDiffs(prev => prev.filter(d => d.file !== diff.file));
+  };
+
+  const handleRejectDiff = (diff: DiffItem) => {
+    setPendingDiffs(prev => prev.filter(d => d.file !== diff.file));
+  };
+
+  const handleAcceptAll = () => {
+    if (pendingDiffs.length > 0) {
+      onApplyDiff(pendingDiffs);
+    }
+    setPendingDiffs([]);
+  };
+
+  const handleRejectAll = () => {
+    setPendingDiffs([]);
   };
 
   // ==================== Terminal 命令处理 ====================
@@ -125,7 +166,9 @@ export const VibeComposer: React.FC<VibeComposerProps> = ({
           skills
         };
         const result = await currentAgent.sendPrompt(prompt, context);
-        if (result.diffs?.length) onApplyDiff(result.diffs);
+        if (result.diffs?.length) {
+          setPendingDiffs(result.diffs);
+        }
         setTerminalOutput(prev => [...prev, { type: 'success', content: `Executed with ${currentAgent.name}` }]);
       }
     } else if (cmd === 'undo' && onUndoLast) {
@@ -182,7 +225,17 @@ export const VibeComposer: React.FC<VibeComposerProps> = ({
         {activeTab === 'chat' && (
           <>
             <div className="flex-1 overflow-auto p-4 space-y-4 text-sm">
-              {messages.length === 0 && (
+              {/* Diff Preview */}
+              <VibeDiffPreview
+                diffs={pendingDiffs}
+                onAccept={handleAcceptDiff}
+                onReject={handleRejectDiff}
+                onAcceptAll={handleAcceptAll}
+                onRejectAll={handleRejectAll}
+                onClose={() => setPendingDiffs([])}
+              />
+
+              {messages.length === 0 && pendingDiffs.length === 0 && (
                 <div className="text-center text-zinc-500 mt-8">
                   输入需求开始 Vibe Coding<br />
                   当前使用：{currentAgent?.name || '未选择 Agent'}

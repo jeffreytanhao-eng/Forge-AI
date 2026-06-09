@@ -17,9 +17,6 @@ import ThemeCustomizer from './components/ThemeCustomizer';
 import SkillHub from './components/SkillHub';
 import WikiKnowledgeBase from './components/WikiKnowledgeBase';
 
-// 初始化 Agent Registry
-import './agents/index';
-
 export default function App() {
   // 确保 useAgentStore 正确初始化
   const { setCurrentAgent } = useAgentStore();
