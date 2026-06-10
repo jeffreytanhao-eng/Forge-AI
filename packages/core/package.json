@@ -1,0 +1,17 @@
+{
+  "name": "@forge-ai/core",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "dev": "echo 'core dev'",
+    "build": "echo 'core build'",
+    "lint": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "~5.8.2"
+  }
+}
