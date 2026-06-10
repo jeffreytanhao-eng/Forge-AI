@@ -1,21 +1,35 @@
-import { CodingAgent } from '../types';
+import { CodingAgent, AgentContext, AgentResponse } from '../types';
 
 export abstract class BaseCodingAgent implements CodingAgent {
-  abstract id: string;
-  abstract name: string;
-  abstract description: string;
-  abstract icon: string;
-  abstract supportsStreaming: boolean;
+  abstract readonly id: string;
+  abstract readonly name: string;
+  abstract readonly description: string;
+  abstract readonly supportsStreaming: boolean;
 
-  abstract sendPrompt(prompt: string, context: any): Promise<any>;
+  abstract sendPrompt(
+    prompt: string,
+    context: AgentContext
+  ): Promise<AgentResponse>;
+
+  // 默认不实现流式，子类按需覆盖
+  sendPromptStream?(
+    prompt: string,
+    context: AgentContext
+  ): AsyncGenerator<any, void, unknown> {
+    throw new Error(`${this.name} does not support streaming`);
+  }
 
   protected extractJSON(text: string): any {
-    const jsonMatch = text.match(/```json\s*([\s\S]*?)\s*```/) || text.match(/\{[\s\S]*"diffs"[\s\S]*\}/);
+    // 支持 ```json ... ``` 或直接 JSON
+    const jsonMatch =
+      text.match(/```json\s*([\s\S]*?)\s*```/) ||
+      text.match(/\{[\s\S]*"diffs"[\s\S]*\}/);
+
     if (jsonMatch) {
       try {
         return JSON.parse(jsonMatch[1] || jsonMatch[0]);
-      } catch (e) {
-        console.warn('JSON 解析失败', e);
+      } catch {
+        return null;
       }
     }
     return null;
