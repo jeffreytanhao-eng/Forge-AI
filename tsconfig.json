@@ -2,18 +2,21 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "jsx": "react-jsx",
+    "moduleResolution": "Bundler",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@forge-ai/core": ["packages/core/src"],
+      "@forge-ai/core/*": ["packages/core/src/*"],
+      "@forge-ai/cli": ["packages/cli/src"],
+      "@forge-ai/cli/*": ["packages/cli/src/*"]
+    }
   },
-  "files": [],
-  "references": [
-    { "path": "./packages/core" },
-    { "path": "./packages/cli" },
-    { "path": "./packages/web" }
-  ]
+  "exclude": ["node_modules", "dist"]
 }
