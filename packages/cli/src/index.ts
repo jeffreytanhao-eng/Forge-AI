@@ -2,16 +2,16 @@
 
 import { Command } from 'commander';
 import { vibeCommand } from './commands/vibe';
-import { AgentRegistry } from '@forge-ai/core';
+import { AgentRegistry, MockAgent } from '@forge-ai/core';
 
-// 初始化 AgentRegistry
-AgentRegistry.initialize();
+// 注册 Mock Agent
+AgentRegistry.register(new MockAgent());
 
 const program = new Command();
 
 program
   .name('forge')
-  .description('Forge AI - 知识图谱驱动的 Vibe Coding CLI')
+  .description('Forge AI - 知识图谱驱动的终端 Vibe Coding 工具')
   .version('0.1.0');
 
 program
