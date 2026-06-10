@@ -11,15 +11,15 @@ import {
   MessageSquare, ArrowUpRight, ArrowLeftRight, Wrench, Code2, ChevronLeft
 } from 'lucide-react';
 import { VibeComposer } from './VibeIDE/VibeComposer';
-import { WorkspaceFile, Skill } from '../types';
+import { WorkspaceFile, Skill, Agent, VibeDiff, VibeHistoryEntry, CodeKnowledgeGraph } from '../types';
 import { generateGraphifyGraph } from '../utils/graphify';
 
 interface ForgeIDEProps {
-  agents?: any[];
+  agents?: Agent[];
   activeAgentId?: string;
   onChangeActiveAgent?: (id: string) => void;
   workspaceName: string;
-  onChangeWorkspace?: (name: any) => void;
+  onChangeWorkspace?: (name: string) => void;
   workspaceFiles: WorkspaceFile[];
   onUpdateFiles: (files: WorkspaceFile[]) => void;
   onUpdateGraph: () => void;
@@ -48,16 +48,11 @@ export default function ForgeIDE({
   const [collapsedFolders, setCollapsedFolders] = useState<{ [key: string]: boolean }>({});
   
   // Pending Vibe Coding Diffs for side-by-side Monaco Review
-  const [vibePendingDiffs, setVibePendingDiffs] = useState<any[]>([]);
+  const [vibePendingDiffs, setVibePendingDiffs] = useState<VibeDiff[]>([]);
   const [reviewingDiffIndex, setReviewingDiffIndex] = useState<number | null>(null);
   
   // Vibe changes history log for Undo mechanism
-  const [vibeHistory, setVibeHistory] = useState<Array<{
-    id: string;
-    timestamp: string;
-    description: string;
-    diffs: Array<{ file: string; previousContent: string; content: string }>;
-  }>>([]);
+  const [vibeHistory, setVibeHistory] = useState<VibeHistoryEntry[]>([]);
 
   const [isApplying, setIsApplying] = useState(false);
 
@@ -208,7 +203,7 @@ export default function ForgeIDE({
   const fileTreeRootNode = buildHierarchicalTree(workspaceFiles);
 
   // ==================== Vibe Coding 流程闭环 2.0 ====================
-  const handleApplyDiff = (diffs: any[]) => {
+  const handleApplyDiff = (diffs: VibeDiff[]) => {
     if (!diffs || diffs.length === 0) return;
     setVibePendingDiffs(diffs);
     setReviewingDiffIndex(0); // Trigger side-by-side diff review automatically

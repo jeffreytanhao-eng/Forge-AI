@@ -175,3 +175,16 @@ export interface DocumentImportResult {
   errors: string[];
   warnings: string[];
 }
+
+export interface VibeDiff {
+  file: string;
+  content: string;
+  description?: string;
+}
+
+export interface VibeHistoryEntry {
+  id: string;
+  timestamp: string;
+  description: string;
+  diffs: Array<{ file: string; previousContent: string; content: string }>;
+}

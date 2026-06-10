@@ -1,5 +1,5 @@
 import { BaseCodingAgent } from '../base/CodingAgent';
-import { AgentContext, AgentResponse, AgentDiff } from '../../types/agent';
+import { AgentContext, AgentResponse, AgentDiff } from '@forge-ai/core';
 
 export class ClaudeAgent extends BaseCodingAgent {
   id = 'claude-3-5-sonnet';

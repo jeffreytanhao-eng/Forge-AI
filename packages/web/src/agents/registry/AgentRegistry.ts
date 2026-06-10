@@ -1,4 +1,4 @@
-import { CodingAgent } from '../../types/agent';
+import { CodingAgent } from '@forge-ai/core';
 import { ClaudeAgent } from '../claude/ClaudeAgent';
 
 class AgentRegistryClass {

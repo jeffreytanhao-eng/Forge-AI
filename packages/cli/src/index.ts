@@ -31,8 +31,9 @@ program
 program
   .command('vibe <prompt>')
   .description('使用自然语言进行代码修改')
-  .action(async (prompt: string) => {
-    await vibeCommand(prompt);
+  .option('-a, --agent <id>', '指定使用的 Agent ID（如 doubao、claude）')
+  .action(async (prompt: string, options) => {
+    await vibeCommand(prompt, { agent: options.agent });
   });
 
 program.parse(process.argv);

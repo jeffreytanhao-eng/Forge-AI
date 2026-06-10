@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { CodingAgent } from '../types/agent';
+import { CodingAgent } from '@forge-ai/core';
 import { AgentRegistry } from '../agents/registry/AgentRegistry';
 
 interface AgentState {

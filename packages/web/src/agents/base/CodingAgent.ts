@@ -1,11 +1,11 @@
-import { CodingAgent, AgentContext, AgentResponse } from '../../types/agent';
+import { CodingAgent, AgentContext, AgentResponse } from '@forge-ai/core';
 
 export abstract class BaseCodingAgent implements CodingAgent {
   abstract id: string;
   abstract name: string;
   abstract description: string;
   icon?: string;
-  supportsStreaming?: boolean;
+  supportsStreaming: boolean = false;
 
   abstract sendPrompt(prompt: string, context: AgentContext): Promise<AgentResponse>;
 

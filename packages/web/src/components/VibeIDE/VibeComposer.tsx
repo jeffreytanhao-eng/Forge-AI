@@ -6,16 +6,29 @@ import {
 import { AgentSelector } from './AgentSelector';
 import { useAgentStore } from '../../stores/useAgentStore';
 import { VibeDiffPreview } from './VibeDiffPreview';
+import { WorkspaceFile, Skill, VibeDiff, VibeHistoryEntry, CodeKnowledgeGraph } from '../../types';
+
+interface VibeMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: string;
+  agent?: string;
+}
+
+interface TerminalLine {
+  type: 'system' | 'command' | 'error' | 'success';
+  content: string;
+}
 
 interface VibeComposerProps {
-  workspaceFiles: any[];
-  onApplyDiff: (diffs: any[]) => void;
-  vibeHistory?: any[];
+  workspaceFiles: WorkspaceFile[];
+  onApplyDiff: (diffs: VibeDiff[]) => void;
+  vibeHistory?: VibeHistoryEntry[];
   onUndoSession?: (id: string) => void;
   onUndoLast?: () => void;
-  currentFile?: any;
-  knowledgeGraph?: any;
-  skills?: any[];
+  currentFile?: WorkspaceFile | null;
+  knowledgeGraph?: CodeKnowledgeGraph;
+  skills?: Skill[];
 }
 
 export const VibeComposer: React.FC<VibeComposerProps> = ({
@@ -29,19 +42,18 @@ export const VibeComposer: React.FC<VibeComposerProps> = ({
   skills,
 }) => {
   const [activeTab, setActiveTab] = useState<'chat' | 'terminal' | 'history'>('chat');
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<VibeMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [streamingPlan, setStreamingPlan] = useState('');
-  const [pendingDiffs, setPendingDiffs] = useState<any[]>([]);
+  const [pendingDiffs, setPendingDiffs] = useState<VibeDiff[]>([]);
 
   const { currentAgent } = useAgentStore();
 
-  // ==================== 发送 Vibe（支持流式 + Diff 预览） ====================
   const sendVibe = async () => {
     if (!input.trim() || loading || !currentAgent) return;
 
-    const userMessage = {
+    const userMessage: VibeMessage = {
       role: 'user',
       content: input,
       timestamp: new Date().toLocaleTimeString()
@@ -54,9 +66,8 @@ export const VibeComposer: React.FC<VibeComposerProps> = ({
     try {
       const context = { workspaceFiles, currentFile, knowledgeGraph, skills };
 
-      let finalResult: any = null;
+      let finalResult: VibeDiff | null = null;
 
-      // 真实流式（Claude）
       if (currentAgent.supportsStreaming && 'sendPromptStream' in currentAgent) {
         for await (const chunk of (currentAgent as any).sendPromptStream(input, context)) {
           if (chunk.type === 'delta') {
@@ -70,7 +81,6 @@ export const VibeComposer: React.FC<VibeComposerProps> = ({
           }
         }
       } else {
-        // 普通 Agent
         finalResult = await currentAgent.sendPrompt(input, context);
       }
 
@@ -82,15 +92,15 @@ export const VibeComposer: React.FC<VibeComposerProps> = ({
           agent: currentAgent.name
         }]);
 
-        // 有 diffs 时先进入预览模式，而不是直接应用
         if (finalResult.diffs && finalResult.diffs.length > 0) {
           setPendingDiffs(finalResult.diffs);
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       setMessages(prev => [...prev, {
         role: 'system',
-        content: `Error: ${error.message}`,
+        content: `Error: ${message}`,
         timestamp: new Date().toLocaleTimeString()
       }]);
     } finally {
@@ -100,12 +110,12 @@ export const VibeComposer: React.FC<VibeComposerProps> = ({
   };
 
   // ==================== Diff 预览操作 ====================
-  const handleAcceptDiff = (diff: any) => {
+  const handleAcceptDiff = (diff: VibeDiff) => {
     onApplyDiff([diff]);
     setPendingDiffs(prev => prev.filter(d => d.file !== diff.file));
   };
 
-  const handleRejectDiff = (diff: any) => {
+  const handleRejectDiff = (diff: VibeDiff) => {
     setPendingDiffs(prev => prev.filter(d => d.file !== diff.file));
   };
 
@@ -121,7 +131,7 @@ export const VibeComposer: React.FC<VibeComposerProps> = ({
   };
 
   // ==================== Terminal 命令（简化版） ====================
-  const [terminalOutput, setTerminalOutput] = useState<any[]>([
+  const [terminalOutput, setTerminalOutput] = useState<TerminalLine[]>([
     { type: 'system', content: 'vibe_ide % Type "help" for available commands' }
   ]);
   const [terminalInput, setTerminalInput] = useState('');
@@ -173,7 +183,7 @@ export const VibeComposer: React.FC<VibeComposerProps> = ({
         ].map((tab) => (
           <button
             key={tab.key}
-            onClick={() => setActiveTab(tab.key as any)}
+            onClick={() => setActiveTab(tab.key)}
             className={`flex-1 flex items-center justify-center gap-2 py-2 border-b-2 transition-colors ${
               activeTab === tab.key
                 ? 'border-violet-500 text-white'

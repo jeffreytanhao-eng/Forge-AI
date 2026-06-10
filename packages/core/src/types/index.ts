@@ -25,6 +25,7 @@ export interface CodingAgent {
   readonly id: string;
   readonly name: string;
   readonly description: string;
+  readonly icon?: string;
   readonly supportsStreaming: boolean;
 
   sendPrompt(prompt: string, context: AgentContext): Promise<AgentResponse>;

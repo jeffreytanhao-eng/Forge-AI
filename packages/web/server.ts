@@ -7,6 +7,7 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
+import Anthropic from "@anthropic-ai/sdk";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -119,9 +120,10 @@ Provide all details matching the required schema. Ensure the system prompt is co
     const resultText = response.text?.trim() || "{}";
     const agentConfig = JSON.parse(resultText);
     res.json(agentConfig);
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("AI client error during agent generation", err);
-    res.status(500).json({ error: err.message || "Failed to generate Agent details" });
+    const message = err instanceof Error ? err.message : String(err);
+    res.status(500).json({ error: message || "Failed to generate Agent details" });
   }
 });
 
@@ -173,9 +175,10 @@ My system instructions were setup as:
     });
 
     res.json({ text: response.text });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("AI client error during agent session", err);
-    res.status(500).json({ error: err.message || "Failed to solve agent response" });
+    const message = err instanceof Error ? err.message : String(err);
+    res.status(500).json({ error: message || "Failed to solve agent response" });
   }
 });
 
@@ -255,9 +258,10 @@ Analyze the user's instructions and modify the provided file content. Produce th
     const jsonText = response.text?.trim() || "{}";
     const resultObj = JSON.parse(jsonText);
     res.json(resultObj);
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("AI client error during vibe action", err);
-    res.status(500).json({ error: err.message || "Failed to compile code updates" });
+    const message = err instanceof Error ? err.message : String(err);
+    res.status(500).json({ error: message || "Failed to compile code updates" });
   }
 });
 
@@ -285,9 +289,10 @@ ${skill.code.slice(0, 200)}${skill.code.length > 200 ? '...' : ''}
 Execution completed at ${new Date().toLocaleString()}`;
 
     res.json({ success: true, output });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error executing skill", err);
-    res.json({ success: false, output: `Execution failed: ${err.message}` });
+    const message = err instanceof Error ? err.message : String(err);
+    res.json({ success: false, output: `Execution failed: ${message}` });
   }
 });
 
@@ -305,9 +310,10 @@ app.post("/api/skill/import", async (req, res) => {
       message: `Successfully imported ${importedCount} skill(s)`,
       importedCount 
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error importing skills", err);
-    res.status(500).json({ success: false, error: err.message });
+    const message = err instanceof Error ? err.message : String(err);
+    res.status(500).json({ success: false, error: message });
   }
 });
 
@@ -322,9 +328,10 @@ app.post("/api/skill/export", async (req, res) => {
       skills: skillIds || [],
       exportedAt: new Date().toISOString()
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error exporting skills", err);
-    res.status(500).json({ success: false, error: err.message });
+    const message = err instanceof Error ? err.message : String(err);
+    res.status(500).json({ success: false, error: message });
   }
 });
 
@@ -348,9 +355,10 @@ app.post("/api/wiki/create", async (req, res) => {
     };
 
     res.json({ success: true, page: newPage });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error creating wiki page", err);
-    res.status(500).json({ success: false, error: err.message });
+    const message = err instanceof Error ? err.message : String(err);
+    res.status(500).json({ success: false, error: message });
   }
 });
 
@@ -372,9 +380,10 @@ app.put("/api/wiki/update", async (req, res) => {
     };
 
     res.json({ success: true, page: updatedPage });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error updating wiki page", err);
-    res.status(500).json({ success: false, error: err.message });
+    const message = err instanceof Error ? err.message : String(err);
+    res.status(500).json({ success: false, error: message });
   }
 });
 
@@ -387,9 +396,10 @@ app.delete("/api/wiki/delete", async (req, res) => {
 
   try {
     res.json({ success: true, message: `Page ${id} deleted successfully` });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error deleting wiki page", err);
-    res.status(500).json({ success: false, error: err.message });
+    const message = err instanceof Error ? err.message : String(err);
+    res.status(500).json({ success: false, error: message });
   }
 });
 
@@ -413,9 +423,10 @@ app.post("/api/wiki/import", async (req, res) => {
     };
 
     res.json({ success: true, page: newPage });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error importing document", err);
-    res.status(500).json({ success: false, error: err.message });
+    const message = err instanceof Error ? err.message : String(err);
+    res.status(500).json({ success: false, error: message });
   }
 });
 
@@ -426,22 +437,24 @@ app.post("/api/anthropic", async (req, res) => {
     return res.status(400).json({ error: 'prompt is required' });
   }
 
-  try {
-    // Simulate Claude response (mock)
-    // In real production, you would use @anthropic-ai/sdk to call actual Claude API
-    const mockPlan = `重构分析完成:
+  const effectiveApiKey = apiKey || process.env.ANTHROPIC_API_KEY;
+
+  if (!effectiveApiKey) {
+    const mockPlan = `[模拟模式] 重构分析完成:
 
 1. 首先分析项目结构和代码依赖
 2. 识别需要优化的核心组件
 3. 实现重构方案，保持功能完整性
 4. 更新相关文档和测试
 
-执行 ${prompt.slice(0, 50)}...`;
+执行 ${prompt.slice(0, 50)}...
+
+提示: 设置 ANTHROPIC_API_KEY 环境变量可获取真实 AI 响应。`;
 
     const mockDiffs = [
       {
         file: '/mock-component.tsx',
-        content: `// 重构后的组件代码
+        content: `// 优化的组件代码
 import React from 'react';
 
 export const OptimizedComponent = () => {
@@ -451,21 +464,61 @@ export const OptimizedComponent = () => {
     </div>
   );
 };`,
-        description: '优化了组件结构，添加了类型安全'
+        description: '优化了组件结构，添加了类型安全（模拟数据）'
       }
     ];
 
-    res.json({
+    return res.json({
       plan: mockPlan,
       diffs: mockDiffs,
-      usage: { inputTokens: prompt.length, outputTokens: mockPlan.length + mockDiffs[0].content.length }
+      usage: { inputTokens: 0, outputTokens: 0 }
     });
-  } catch (err: any) {
+  }
+
+  try {
+    const anthropic = new Anthropic({ apiKey: effectiveApiKey });
+
+    const msg = await anthropic.messages.create({
+      model,
+      max_tokens: maxTokens,
+      system: systemPrompt || 'You are a code architect. Analyze the request and produce a structured plan with file diffs.',
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    const contentBlock = msg.content.find((block) => block.type === 'text');
+    const rawText = contentBlock?.type === 'text' ? contentBlock.text : '';
+
+    let plan = rawText;
+    let diffs: Array<{ file: string; content: string; description: string }> = [];
+
+    const diffBlockMatch = rawText.match(/```(?:diff)?\s*\n([\s\S]*?)```/g);
+    if (diffBlockMatch) {
+      diffs = diffBlockMatch.map((block, idx) => {
+        const code = block.replace(/```(?:diff)?\s*\n?/, '').replace(/```$/, '').trim();
+        const firstLine = code.split('\n')[0] || '';
+        const fileMatch = firstLine.match(/^[+\-]{3}\s+(.+)$/);
+        const file = fileMatch ? fileMatch[1].trim() : `/generated-file-${idx + 1}.tsx`;
+        const content = fileMatch ? code.split('\n').slice(1).join('\n').trim() : code;
+        return { file, content, description: `Generated diff for ${file}` };
+      });
+      plan = rawText.replace(/```(?:diff)?\s*\n[\s\S]*?```/g, '').trim();
+    }
+
+    res.json({
+      plan,
+      diffs,
+      usage: {
+        inputTokens: msg.usage?.input_tokens ?? 0,
+        outputTokens: msg.usage?.output_tokens ?? 0,
+      },
+    });
+  } catch (err: unknown) {
     console.error('Error calling Claude API', err);
-    res.status(500).json({ 
+    const message = err instanceof Error ? err.message : String(err);
+    res.status(500).json({
       plan: 'Error: Claude API 调用失败',
       diffs: [],
-      error: err.message 
+      error: message,
     });
   }
 });
@@ -528,9 +581,10 @@ app.post("/api/vibe", async (req, res) => {
     const jsonText = response.text?.trim() || "{}";
     const resultObj = JSON.parse(jsonText);
     res.json(resultObj);
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("AI client error during /api/vibe", err);
-    res.status(500).json({ error: err.message || "Failed to compile vibe response" });
+    const message = err instanceof Error ? err.message : String(err);
+    res.status(500).json({ error: message || "Failed to compile vibe response" });
   }
 });
 

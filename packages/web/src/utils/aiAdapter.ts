@@ -1,21 +1,24 @@
 import { useModelStore } from '../stores/useModelStore';
-import { generateGraphifyGraph } from './graphify'; // 复用现有知识图谱引擎
+import { generateGraphifyGraph } from './graphify';
+import { WorkspaceFile, CodeKnowledgeGraph } from '../types';
+
+export interface VibeResponse {
+  plan: string;
+  diffs: Array<{ file: string; content: string; description?: string }>;
+  usage?: { inputTokens: number; outputTokens: number };
+}
 
 export interface GraphContext {
-  files: any[];
-  relations: any[];
-  functions: any[];
+  files: WorkspaceFile[];
+  relations: Array<{ source: string; target: string; type: string }>;
+  functions: Array<{ name: string; file: string }>;
 }
 
 export class AIAdapter {
-  /**
-   * 发送 Vibe Prompt 并注入知识图谱上下文
-   */
-  static async sendVibePrompt(prompt: string, workspaceFiles: any[]) {
+  static async sendVibePrompt(prompt: string, workspaceFiles: WorkspaceFile[]): Promise<VibeResponse> {
     const { currentProvider, modelName, baseUrl, apiKey } = useModelStore.getState();
 
-    // 实时生成知识图谱上下文
-    let graphContext: any = { nodes: [], edges: [] };
+    let graphContext: CodeKnowledgeGraph = { nodes: [], edges: [] };
     try {
       graphContext = generateGraphifyGraph(workspaceFiles);
     } catch (e) {
@@ -52,7 +55,7 @@ ${JSON.stringify(graphContext, null, 2).slice(0, 7000)}
     }
   }
 
-  private static async callLocalOllama(prompt: string, baseUrl: string, model: string) {
+  private static async callLocalOllama(prompt: string, baseUrl: string, model: string): Promise<VibeResponse> {
     const response = await fetch(`${baseUrl}/v1/chat/completions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -65,11 +68,12 @@ ${JSON.stringify(graphContext, null, 2).slice(0, 7000)}
     });
 
     if (!response.ok) throw new Error('Ollama 调用失败');
-    return response.json();
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content || '';
+    return JSON.parse(content) as VibeResponse;
   }
 
-  private static async callGemini(prompt: string, apiKey?: string) {
-    // 调用现有后端代理（推荐）或直接调用 Gemini API
+  private static async callGemini(prompt: string, apiKey?: string): Promise<VibeResponse> {
     const response = await fetch('/api/vibe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -77,6 +81,6 @@ ${JSON.stringify(graphContext, null, 2).slice(0, 7000)}
     });
 
     if (!response.ok) throw new Error('Gemini 调用失败');
-    return response.json();
+    return response.json() as Promise<VibeResponse>;
   }
 }

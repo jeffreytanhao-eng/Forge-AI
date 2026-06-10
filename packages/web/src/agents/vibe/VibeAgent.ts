@@ -1,5 +1,5 @@
 import { BaseCodingAgent } from '../base/CodingAgent';
-import { AgentContext, AgentResponse } from '../../types/agent';
+import { AgentContext, AgentResponse } from '@forge-ai/core';
 import { AIAdapter } from '../../utils/aiAdapter'; // 复用项目已有的 AIAdapter
 
 /**
