@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { AgentRegistry } from '../agent/registry';
-import { CodingAgent, AgentContext, AgentResponse } from '../types';
+import { AgentRegistry } from '../agent/registry.js';
+import { CodingAgent, AgentContext, AgentResponse } from '../types/index.js';
 
 describe('AgentRegistry', () => {
   it('getInstance 返回同一实例', () => {
@@ -86,5 +86,52 @@ describe('AgentRegistry', () => {
     const agent = AgentRegistry.getAgent('dup-agent');
     expect(agent).toBeDefined();
     expect(agent!.name).toBe('Replacement');
+  });
+
+  it('unregister 移除 Agent', () => {
+    const testAgent: CodingAgent = {
+      id: 'to-remove',
+      name: 'To Remove',
+      description: 'temp',
+      supportsStreaming: false,
+      async sendPrompt(_prompt: string, _context: AgentContext): Promise<AgentResponse> {
+        return { plan: 'temp', diffs: [] };
+      },
+    };
+
+    AgentRegistry.register(testAgent);
+    expect(AgentRegistry.hasAgent('to-remove')).toBe(true);
+
+    AgentRegistry.unregister('to-remove');
+    expect(AgentRegistry.hasAgent('to-remove')).toBe(false);
+  });
+
+  it('getByCapability 按能力过滤 Agent', () => {
+    const codeAgent: CodingAgent = {
+      id: 'coder',
+      name: 'Code Expert',
+      description: 'Specialized in code review and refactoring',
+      supportsStreaming: false,
+      async sendPrompt(_prompt: string, _context: AgentContext): Promise<AgentResponse> {
+        return { plan: 'code', diffs: [] };
+      },
+    };
+
+    const chatAgent: CodingAgent = {
+      id: 'chat',
+      name: 'Chat Bot',
+      description: 'General purpose chat assistant',
+      supportsStreaming: false,
+      async sendPrompt(_prompt: string, _context: AgentContext): Promise<AgentResponse> {
+        return { plan: 'chat', diffs: [] };
+      },
+    };
+
+    AgentRegistry.register(codeAgent);
+    AgentRegistry.register(chatAgent);
+
+    const codeMatches = AgentRegistry.getByCapability('code');
+    expect(codeMatches.length).toBeGreaterThan(0);
+    expect(codeMatches.some(a => a.id === 'coder')).toBe(true);
   });
 });

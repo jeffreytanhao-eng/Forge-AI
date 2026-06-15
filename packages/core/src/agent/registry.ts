@@ -1,4 +1,4 @@
-import { CodingAgent } from '../types';
+import { CodingAgent } from '../types/index.js';
 
 class AgentRegistryClass {
   private agents = new Map<string, CodingAgent>();
@@ -8,6 +8,10 @@ class AgentRegistryClass {
       console.warn(`Agent with id "${agent.id}" already registered. Overwriting.`);
     }
     this.agents.set(agent.id, agent);
+  }
+
+  unregister(id: string): void {
+    this.agents.delete(id);
   }
 
   getAgent(id: string): CodingAgent | undefined {
@@ -20,6 +24,14 @@ class AgentRegistryClass {
 
   hasAgent(id: string): boolean {
     return this.agents.has(id);
+  }
+
+  getByCapability(cap: string): CodingAgent[] {
+    return this.getAllAgents().filter(agent => {
+      const desc = agent.description.toLowerCase();
+      const name = agent.name.toLowerCase();
+      return desc.includes(cap.toLowerCase()) || name.includes(cap.toLowerCase());
+    });
   }
 }
 

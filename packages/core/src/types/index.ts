@@ -21,6 +21,17 @@ export interface AgentResponse {
   };
 }
 
+export interface AgentConfig {
+  model?: string;
+  temperature?: number;
+  maxTokens?: number;
+  systemPrompt?: string;
+  apiKey?: string;
+  endpoint?: string;
+}
+
+export type AgentStatus = 'idle' | 'running' | 'error';
+
 export interface CodingAgent {
   readonly id: string;
   readonly name: string;
@@ -40,4 +51,7 @@ export interface CodingAgent {
     void,
     unknown
   >;
+
+  configure?(config: AgentConfig): void;
+  getStatus?(): AgentStatus;
 }

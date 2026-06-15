@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { MockAgent } from '../agent/mock';
+import { MockAgent } from '../agent/mock.js';
 
 describe('MockAgent', () => {
   const agent = new MockAgent();
@@ -7,7 +7,7 @@ describe('MockAgent', () => {
   it('基本属性正确', () => {
     expect(agent.id).toBe('mock');
     expect(agent.name).toBe('Mock Agent');
-    expect(agent.supportsStreaming).toBe(false);
+    expect(agent.supportsStreaming).toBe(true);
   });
 
   it('sendPrompt 返回正确的格式（plan, diffs）', async () => {

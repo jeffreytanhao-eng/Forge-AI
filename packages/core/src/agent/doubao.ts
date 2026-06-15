@@ -1,5 +1,5 @@
-import { BaseCodingAgent } from './base';
-import { AgentContext, AgentResponse, AgentDiff } from '../types';
+import { BaseCodingAgent } from './base.js';
+import { AgentContext, AgentResponse, AgentDiff } from '../types/index.js';
 
 interface DoubaoMessage {
   role: 'system' | 'user' | 'assistant';

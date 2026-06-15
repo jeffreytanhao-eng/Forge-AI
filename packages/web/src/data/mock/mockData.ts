@@ -546,7 +546,7 @@ export const DEFAULT_THEME: PlatformTheme = {
   accentColor: '#10b981', // Emerald
   backgroundStyle: 'slate-cyber',
   fontFamily: 'Inter',
-  logoText: 'CodeX'
+  logoText: 'Forge AI'
 };
 
 export const INITIAL_SKILLS: Skill[] = [
@@ -667,7 +667,7 @@ export const INITIAL_WIKI_PAGES: WikiPage[] = [
 
 ## 主要功能
 
-### 1. CodeX 编辑器
+### 1. Forge AI 编辑器
 强大的代码编辑器，支持多种编程语言和智能代码补全。
 
 ### 2. Model Hub
@@ -690,7 +690,7 @@ export const INITIAL_WIKI_PAGES: WikiPage[] = [
 1. 点击顶部导航切换到不同模块
 2. 在 Model Hub 中配置您的 AI 模型
 3. 创建智能体并赋予它们工具
-4. 在 CodeX 中编写代码
+4. 在 Forge AI 中编写代码
 5. 使用 Knowledge Graph 分析代码结构
 
 ---

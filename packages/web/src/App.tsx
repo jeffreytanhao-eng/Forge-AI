@@ -4,25 +4,26 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Bot, Server, Layers, Code, Palette, Cpu, CheckCircle, Database, HelpCircle, LayoutDashboard, Terminal, Wrench, BookOpen } from 'lucide-react';
+import { Bot, Server, Layers, Code, Palette, Cpu, CheckCircle, Database, HelpCircle, LayoutDashboard, Terminal, Wrench, BookOpen, Plug } from 'lucide-react';
 import { ModelProvider, ModelConfig, Agent, PlatformTheme, WorkspaceFile, Skill, WikiPage } from './types';
 import { INITIAL_PROVIDERS, INITIAL_MODELS, BUILTIN_AGENTS, DEFAULT_THEME, MOCK_WORKSPACES, INITIAL_SKILLS, INITIAL_WIKI_PAGES } from './data/mockData';
 import { useAgentStore } from './stores/useAgentStore';
 
 import ModelHub from './components/ModelHub';
 import AgentStudio from './components/AgentStudio';
-import ForgeIDE from './components/ForgeIDE';
+import ForgeCLI from './components/ForgeCLI';
 import KnowledgeGraphView from './components/KnowledgeGraphView';
 import ThemeCustomizer from './components/ThemeCustomizer';
 import SkillHub from './components/SkillHub';
 import WikiKnowledgeBase from './components/WikiKnowledgeBase';
+import MCPManager from './components/MCPManager';
 
 export default function App() {
   // 确保 useAgentStore 正确初始化
   const { setCurrentAgent } = useAgentStore();
   
   // Navigation State Configuration
-  const [activeTab, setActiveTab] = useState<'model_hub' | 'agent_studio' | 'forge_ide' | 'knowledge_graph' | 'theme_customizer' | 'skill_hub' | 'wiki'>('forge_ide');
+  const [activeTab, setActiveTab] = useState<'model_hub' | 'agent_studio' | 'forge_ide' | 'knowledge_graph' | 'theme_customizer' | 'skill_hub' | 'wiki' | 'mcp'>('forge_ide');
   
   // App state
   const [providers, setProviders] = useState<ModelProvider[]>(INITIAL_PROVIDERS);
@@ -160,11 +161,12 @@ export default function App() {
           {/* TAB ROUTING COMPONENT */}
           <nav className="flex items-center bg-slate-950 rounded-lg p-1 border border-slate-900 overflow-x-auto select-none gap-0.5">
             {[
-              { id: 'forge_ide', label: 'CodeX', icon: Code },
+              { id: 'forge_ide', label: 'Forge AI', icon: Code },
               { id: 'model_hub', label: 'Model Hub', icon: Server },
               { id: 'agent_studio', label: 'Agent Studio', icon: Bot },
               { id: 'knowledge_graph', label: 'Knowledge Graph', icon: Layers },
               { id: 'skill_hub', label: 'Skill Hub', icon: Wrench },
+              { id: 'mcp', label: 'MCP', icon: Plug },
               { id: 'wiki', label: 'Wiki', icon: BookOpen },
               { id: 'theme_customizer', label: 'Branding', icon: Palette }
             ].map(tab => {
@@ -239,19 +241,7 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'forge_ide' && (
-          <ForgeIDE
-            agents={agents}
-            activeAgentId={activeAgentId}
-            onChangeActiveAgent={setActiveAgentId}
-            workspaceName={workspaceName}
-            onChangeWorkspace={setWorkspaceName}
-            onUpdateGraph={handleUpdateGraphRevision}
-            workspaceFiles={workspaceFiles[workspaceName] || []}
-            onUpdateFiles={(files) => setWorkspaceFiles(prev => ({ ...prev, [workspaceName]: files }))}
-            skills={skills}
-          />
-        )}
+        {activeTab === 'forge_ide' && <ForgeCLI />}
 
         {activeTab === 'knowledge_graph' && (
           <KnowledgeGraphView
@@ -276,6 +266,10 @@ export default function App() {
             onUpdateSkill={handleUpdateSkill}
             onDeleteSkill={handleDeleteSkill}
           />
+        )}
+
+        {activeTab === 'mcp' && (
+          <MCPManager />
         )}
 
         {activeTab === 'wiki' && (

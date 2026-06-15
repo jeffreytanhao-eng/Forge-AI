@@ -25,6 +25,7 @@ export interface ModelConfig {
 export interface LocalServeInstance {
   id: string;
   modelName: string;
+  modelDir?: string;
   gpuMemoryUsage: number; // e.g. 0.90 (90%)
   tensorParallelSize: number;
   port: number;

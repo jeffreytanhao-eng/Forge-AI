@@ -312,7 +312,7 @@ export default function ModelHub({
           <div className="flex items-center gap-2">
             <Server className="w-5 h-5 text-indigo-400" />
             <span className="font-mono text-xs uppercase tracking-widest bg-slate-800 px-2.5 py-0.5 rounded text-indigo-300 border border-slate-750">
-              CodeX Orchestrator
+              Forge AI Orchestrator
             </span>
           </div>
           <h2 className="text-xl font-extrabold text-slate-100 tracking-tight mt-1.5 font-sans">

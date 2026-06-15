@@ -7,6 +7,7 @@ import { AgentSelector } from './AgentSelector';
 import { useAgentStore } from '../../stores/useAgentStore';
 import { VibeDiffPreview } from './VibeDiffPreview';
 import { WorkspaceFile, Skill, VibeDiff, VibeHistoryEntry, CodeKnowledgeGraph } from '../../types';
+import { AgentResponse } from '@forge-ai/core';
 
 interface VibeMessage {
   role: 'user' | 'assistant' | 'system';
@@ -64,9 +65,14 @@ export const VibeComposer: React.FC<VibeComposerProps> = ({
     setStreamingPlan('');
 
     try {
-      const context = { workspaceFiles, currentFile, knowledgeGraph, skills };
+      const context = {
+        workspaceFiles,
+        currentFile: currentFile ? { path: currentFile.path, content: currentFile.content } : undefined,
+        knowledgeGraph,
+        skills,
+      };
 
-      let finalResult: VibeDiff | null = null;
+      let finalResult: AgentResponse | null = null;
 
       if (currentAgent.supportsStreaming && 'sendPromptStream' in currentAgent) {
         for await (const chunk of (currentAgent as any).sendPromptStream(input, context)) {
@@ -87,7 +93,7 @@ export const VibeComposer: React.FC<VibeComposerProps> = ({
       if (finalResult) {
         setMessages(prev => [...prev, {
           role: 'assistant',
-          content: finalResult,
+          content: finalResult.plan,
           timestamp: new Date().toLocaleTimeString(),
           agent: currentAgent.name
         }]);
@@ -145,7 +151,13 @@ export const VibeComposer: React.FC<VibeComposerProps> = ({
     if (cmd.startsWith('vibe ')) {
       const prompt = cmd.replace('vibe ', '');
       if (currentAgent) {
-        const result = await currentAgent.sendPrompt(prompt, { workspaceFiles, currentFile, knowledgeGraph, skills });
+        const context = {
+          workspaceFiles,
+          currentFile: currentFile ? { path: currentFile.path, content: currentFile.content } : undefined,
+          knowledgeGraph,
+          skills,
+        };
+        const result = await currentAgent.sendPrompt(prompt, context);
         if (result.diffs?.length) {
           setPendingDiffs(result.diffs);
         }
@@ -183,7 +195,7 @@ export const VibeComposer: React.FC<VibeComposerProps> = ({
         ].map((tab) => (
           <button
             key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
+            onClick={() => setActiveTab(tab.key as typeof activeTab)}
             className={`flex-1 flex items-center justify-center gap-2 py-2 border-b-2 transition-colors ${
               activeTab === tab.key
                 ? 'border-violet-500 text-white'
@@ -208,7 +220,7 @@ export const VibeComposer: React.FC<VibeComposerProps> = ({
                     <span>{msg.role === 'user' ? 'You' : msg.agent || 'Agent'}</span>
                     <span>{msg.timestamp}</span>
                   </div>
-                  <pre className="whitespace-pre-wrap">{JSON.stringify(msg.content, null, 2)}</pre>
+                  <pre className="whitespace-pre-wrap">{msg.content}</pre>
                 </div>
               ))}
 

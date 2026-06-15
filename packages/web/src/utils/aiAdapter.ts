@@ -25,7 +25,7 @@ export class AIAdapter {
       console.warn('Graphify 上下文注入失败，继续执行', e);
     }
 
-    const systemPrompt = `你是一位专业的 Codex Vibe Coding Agent。
+    const systemPrompt = `你是一位专业的 Forge AI Vibe Coding Agent。
 项目知识图谱上下文：
 ${JSON.stringify(graphContext, null, 2).slice(0, 7000)}
 

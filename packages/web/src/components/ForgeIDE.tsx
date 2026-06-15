@@ -1,5 +1,5 @@
 /**
- * ForgeIDE.tsx - Codex Vibe Coding 集成版 (最新完整版 - Phase 3 生产级体验)
+ * ForgeIDE.tsx - Vibe Coding 集成版 (完整功能保留)
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -548,7 +548,7 @@ export default function ForgeIDE({
             activeFile ? (
               <Editor
                 height="100%"
-                language={activeFile.language || "typescript"}
+                language={"typescript"}
                 value={activeFile.content || ''}
                 onChange={handleEditorChange}
                 theme="vs-dark"

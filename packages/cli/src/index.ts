@@ -1,16 +1,20 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import { vibeCommand } from './commands/vibe';
-import { AgentRegistry, MockAgent, DoubaoAgent } from '@forge-ai/core';
+import { vibeCommand } from './commands/vibe.js';
+import { registerAgentCommand } from './commands/agent.js';
+import { registerConfigCommand } from './commands/config.js';
+import { registerMCPCommand } from './commands/mcp.js';
+import { registerWikiCommand } from './commands/wiki.js';
+import { registerSkillCommand } from './commands/skill.js';
+import { registerGraphCommand } from './commands/graph.js';
+import { AgentRegistry, MockAgent, DoubaoAgent, ModelRegistry, OpenAIProvider, AnthropicProvider, OllamaProvider, GeminiProvider } from '@forge-ai/core';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-// 注册 Mock Agent（作为后备）
 AgentRegistry.register(new MockAgent());
 
-// 尝试注册 DoubaoAgent（如果环境变量存在）
 const doubaoApiKey = process.env.DOUBAO_API_KEY;
 const doubaoModel = process.env.DOUBAO_MODEL || 'ep-20240606123456-xxxxx';
 
@@ -20,6 +24,11 @@ if (doubaoApiKey) {
 } else {
   console.log('[Forge] 未找到 DOUBAO_API_KEY，使用 Mock Agent');
 }
+
+ModelRegistry.register(new OpenAIProvider());
+ModelRegistry.register(new AnthropicProvider());
+ModelRegistry.register(new OllamaProvider());
+ModelRegistry.register(new GeminiProvider());
 
 const program = new Command();
 
@@ -35,5 +44,12 @@ program
   .action(async (prompt: string, options) => {
     await vibeCommand(prompt, { agent: options.agent });
   });
+
+registerAgentCommand(program);
+registerConfigCommand(program);
+registerMCPCommand(program);
+registerWikiCommand(program);
+registerGraphCommand(program);
+registerSkillCommand(program);
 
 program.parse(process.argv);

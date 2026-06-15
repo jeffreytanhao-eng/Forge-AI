@@ -1,6 +1,5 @@
 import { create } from 'zustand';
-import { CodingAgent } from '@forge-ai/core';
-import { AgentRegistry } from '../agents/registry/AgentRegistry';
+import { CodingAgent, AgentRegistry } from '@forge-ai/core';
 
 interface AgentState {
   currentAgentId: string;
@@ -9,11 +8,10 @@ interface AgentState {
 }
 
 export const useAgentStore = create<AgentState>((set) => {
-  // 初始化时先尝试获取默认的 VibeAgent
   const defaultAgent = AgentRegistry.getAgent('vibe');
-  
+
   return {
-    currentAgentId: 'vibe', // 默认使用自研 Vibe
+    currentAgentId: 'vibe',
     currentAgent: defaultAgent || null,
 
     setCurrentAgent: (id: string) => {

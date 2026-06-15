@@ -2,10 +2,10 @@ import chalk from 'chalk';
 import ora from 'ora';
 import { render } from 'ink';
 import React from 'react';
-import { AgentRegistry, scanWorkspace } from '@forge-ai/core';
-import { getDefaultAgent, setDefaultAgent } from '../config';
-import { AgentSelector } from '../ui/AgentSelector';
-import { DiffPreview } from '../ui/DiffPreview';
+import { AgentRegistry, scanWorkspace, CodingAgent, AgentDiff } from '@forge-ai/core';
+import { getDefaultAgent, setDefaultAgent } from '../config.js';
+import { AgentSelector } from '../ui/AgentSelector.js';
+import { DiffPreview } from '../ui/DiffPreview.js';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -31,7 +31,7 @@ export async function vibeCommand(userPrompt: string, options: VibeOptions = {})
       const { unmount } = render(
         <AgentSelector
           agents={agents}
-          onSelect={(id) => {
+          onSelect={(id: string) => {
             agentId = id;
             setDefaultAgent(id);
             unmount();
@@ -101,12 +101,12 @@ export async function vibeCommand(userPrompt: string, options: VibeOptions = {})
       const { unmount } = render(
         <DiffPreview
           diffs={result.diffs}
-          onAccept={(diff) => {
+          onAccept={(diff: AgentDiff) => {
             finalDiffs = [diff];
             unmount();
             resolve();
           }}
-          onReject={(diff) => {
+          onReject={(diff: AgentDiff) => {
             result.diffs = result.diffs.filter((d: any) => d.file !== diff.file);
             if (result.diffs.length === 0) {
               unmount();

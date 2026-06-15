@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAgentStore } from '../../stores/useAgentStore';
-import { AgentRegistry } from '../../agents/registry/AgentRegistry';
+import { AgentRegistry, ClaudeAgent } from '@forge-ai/core';
 import { Settings } from 'lucide-react';
 
 export const AgentSelector: React.FC = () => {
@@ -11,7 +11,7 @@ export const AgentSelector: React.FC = () => {
 
   const handleAddClaude = () => {
     if (claudeApiKey.trim()) {
-      AgentRegistry.registerClaudeAgent(claudeApiKey);
+      AgentRegistry.register(new ClaudeAgent(claudeApiKey));
       setCurrentAgent('claude-3-5-sonnet');
       setClaudeApiKey('');
       setShowSettings(false);

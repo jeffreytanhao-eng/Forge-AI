@@ -9,6 +9,15 @@ import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import Anthropic from "@anthropic-ai/sdk";
 import dotenv from "dotenv";
+import {
+  SkillRegistry,
+  defaultSkillRuntime,
+  type Skill as CoreSkill,
+  type SkillContext,
+  type SkillChunk,
+  type SkillResult,
+  type SkillCategory,
+} from "@forge-ai/core";
 
 dotenv.config();
 
@@ -265,30 +274,74 @@ Analyze the user's instructions and modify the provided file content. Produce th
   }
 });
 
+// Helper: map frontend SkillCategory to core SkillCategory
+function mapCategory(cat: string): SkillCategory {
+  const map: Record<string, SkillCategory> = {
+    automation: "custom",
+    analysis: "analyze",
+    integration: "custom",
+    utility: "custom",
+    custom: "custom",
+  };
+  return map[cat] || "custom";
+}
+
+// Helper: map frontend parameter type to core parameter type
+function mapParamType(type: string): "string" | "number" | "boolean" | "object" {
+  if (type === "number") return "number";
+  if (type === "boolean") return "boolean";
+  return "string";
+}
+
+// Helper: create a core Skill from the frontend request body
+function createSkillFromBody(bodySkill: Record<string, unknown>): CoreSkill {
+  const params = (bodySkill.parameters as Array<Record<string, unknown>>) || [];
+  return {
+    id: (bodySkill.id as string) || "unknown",
+    name: (bodySkill.name as string) || "Unknown Skill",
+    version: (bodySkill.version as string) || "1.0.0",
+    description: (bodySkill.description as string) || "",
+    category: mapCategory(bodySkill.category as string),
+    parameters: params.map((p) => ({
+      name: (p.name as string) || (p.id as string) || "param",
+      description: (p.description as string) || "",
+      type: mapParamType(p.type as string),
+      required: !!p.required,
+      default: p.defaultValue,
+    })),
+    async *execute(context: SkillContext): AsyncGenerator<SkillChunk, SkillResult, unknown> {
+      yield { type: "delta", text: `Executing skill "${bodySkill.name}"...\n` };
+
+      const code = (bodySkill.code as string) || "";
+      let output = `Skill "${bodySkill.name}" executed successfully!\n\n`;
+      output += `Skill ID: ${bodySkill.id}\n`;
+      output += `Category: ${bodySkill.category}\n`;
+      output += `Parameters: ${JSON.stringify(context.parameters || {})}\n\n`;
+      output += `Code snippet:\n${code.slice(0, 500)}${code.length > 500 ? "..." : ""}`;
+
+      yield { type: "done", text: output, data: {} };
+      return { success: true, output, duration: 0 };
+    },
+  };
+}
+
 // Endpoint: Execute Skill
 app.post("/api/skill/execute", async (req, res) => {
-  const { skillId, skill, parameters } = req.body;
-  if (!skillId || !skill) {
+  const { skillId, skill: bodySkill, parameters } = req.body;
+  if (!skillId || !bodySkill) {
     return res.status(400).json({ error: "skillId and skill are required" });
   }
 
   try {
-    // Simulated execution (could be replaced with real execution)
-    const output = `Skill "${skill.name}" executed successfully!
-      
-Skill ID: ${skillId}
-Category: ${skill.category}
-Trigger: ${skill.triggerType}
+    let coreSkill = SkillRegistry.get(skillId);
+    if (!coreSkill) {
+      coreSkill = createSkillFromBody(bodySkill);
+    }
 
-Parameters received: ${JSON.stringify(parameters || {})}
+    const context: SkillContext = { parameters: parameters || {} };
+    const result = await defaultSkillRuntime.execute(coreSkill, context);
 
-Code snippet:
-${skill.code.slice(0, 200)}${skill.code.length > 200 ? '...' : ''}
-
----
-Execution completed at ${new Date().toLocaleString()}`;
-
-    res.json({ success: true, output });
+    res.json(result);
   } catch (err: unknown) {
     console.error("Error executing skill", err);
     const message = err instanceof Error ? err.message : String(err);

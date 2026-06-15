@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import path from 'path';
-import { scanWorkspace } from '../utils/file-scanner';
+import { scanWorkspace } from '../utils/file-scanner.js';
 
 describe('scanWorkspace', () => {
   const testDir = path.resolve(__dirname, '..');
